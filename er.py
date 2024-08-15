@@ -103,7 +103,7 @@ def display_results(title, result):
 def main():
     url = input("Enter the URL of the website to analyze (e.g. http://example.com, https://example.onion or http://example.gov): ")
     ascii_art()
-    
+
     # Start Tor for anonymized traffic
     os.system("tor")
 
