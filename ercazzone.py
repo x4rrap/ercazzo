@@ -114,11 +114,39 @@ def check_honey_pot(url):
         print(f"Errore durante il controllo del sito honey pot: {e}")
         return None
 
+def install_tor():
+    """Installa e configura Tor"""
+    # Scarica Tor
+    tor_download_url = "https://www.torproject.org/download/tor/source/obfs4-0.4.5.7-signed.tar.gz.asc"
+    tor_archive_path = os.path.join(os.path.expanduser("~"), "Desktop", "tor.tar.gz")
+    
+    if not os.path.exists(tor_archive_path):
+        response = requests.get(tor_download_url, stream=True)
+        with open(tor_archive_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=1024): 
+                if chunk: # filtra i chunk keep-alive
+                    f.write(chunk)
+
+    # Estrae il file Tor
+    os.system(f"cd {os.path.expanduser('~')}/Desktop && tar xzf tor.tar.gz")
+
+    # Configura Tor per l'utilizzo anonimo
+    tor_conf_path = os.path.join(os.path.expanduser("~"), "Desktop", "tor", "src", "torrc")
+    
+    with open(tor_conf_path, 'w') as f:
+        f.write("""
+ControlPort 9051
+CookieAuthentication 1
+StrictNodes 1
+ExitPolicy reject *:25
+""")
+    
 def scan_site(url):
     """Scanna il sito web"""
     print(f"\nScansione in corso su {url}...")
     
-    # Attiva Tor per la scansione anonima
+    # Attiva Tor e configura la connessione anonima
+    install_tor()
     os.system("tor")
 
     whois_lookup(url)
