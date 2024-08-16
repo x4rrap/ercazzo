@@ -105,13 +105,6 @@ def run_uniscan_scan(url):
     result = subprocess.run(uniscan_command, capture_output=True, text=True)
     print(result.stdout)
 
-def run_nmap_scan(url):
-    """Esegue una scansione Nmap sul sito web"""
-    print("\nEsecuzione della scansione Nmap...")
-    nmap_command = ["nmap", "-sS", "-sV", url]
-    result = subprocess.run(nmap_command, capture_output=True, text=True)
-    print(result.stdout)
-
 def run_sqli_detector(url):
     """Esegue SQLiDetector per trovare vulnerabilità di SQL Injection"""
     print("\nEsecuzione di SQLiDetector...")
@@ -146,7 +139,6 @@ def main():
         ("Controllo file robots.txt", check_robots_txt),
         ("Estrazione commenti HTML", extract_html_comments),
         ("Scansione Uniscan", run_uniscan_scan),
-        ("Scansione Nmap", run_nmap_scan),
         ("SQL Injection Detection", run_sqli_detector)
     ]
 
