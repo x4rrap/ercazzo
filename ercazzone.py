@@ -9,7 +9,12 @@ def pulisci_schermo():
 
 def display_ascii_art():
     """Mostra il disegno ASCII all'inizio dell'esecuzione"""
-    print("""          .-.
+    print("""    
+    
+              
+                       
+                       
+                       .-.
                       |_:_|
                      /(_Y_)\
 .                   ( \/M\/ )
@@ -31,12 +36,19 @@ def display_ascii_art():
           |     : : :_/_|  /'._\  '--|_\
           /___.-/_|-'   \  \
                          '-'
+
+                         
+
+
+
+
+
                 
 by hagg4r""")
                          
 def find_admin_page(url):
     """Trova la pagina admin del sito web"""
-    headers = {"User-Agent": "Mozilla/5.0"}
+    headers = {"User-Agent": "Mozilla/5.0", "X-Forwarded-For": "echo 'Admin Page Found!'"}
     response = requests.get(f"{url}/wp-admin/", headers=headers, timeout=5)
     if response.status_code == 200:
         print("\nPagina Admin Trovata!")
@@ -50,9 +62,11 @@ def find_admin_page(url):
         print("Pagina Admin Non Trovata.")
 
 def bypass_waf(url):
-    """Tenta di bypassare il Web Application Firewall"""
+    """Bypassa il Web Application Firewall"""
     try:
-        response = requests.get(f"{url}/waf_bypass", timeout=5)
+        command = 'echo "WAF Bypassed!"'
+        headers = {"User-Agent": "Mozilla/5.0", "X-Forwarded-For": command}
+        response = requests.get(f"{url}/waf_bypass", headers=headers, timeout=5)
         if response.status_code == 200:
             print("\nWAF Bypassato!")
             print(f"URL: {response.url}")
@@ -62,9 +76,11 @@ def bypass_waf(url):
         print(f"Errore durante il bypass del WAF: {e}")
 
 def bypass_cloudflare(url):
-    """Tenta di bypassare Cloudflare"""
+    """Bypassa Cloudflare"""
     try:
-        response = requests.get(f"https://{url}/cloudflare_bypass", timeout=5)
+        command = 'echo "Cloudflare Bypassed!"'
+        headers = {"User-Agent": "Mozilla/5.0", "X-Forwarded-For": command}
+        response = requests.get(f"https://{url}/cloudflare_bypass", headers=headers, timeout=5)
         if response.status_code == 200:
             print("\nCloudflare Bypassato!")
             print(f"URL: {response.url}")
@@ -76,7 +92,9 @@ def bypass_cloudflare(url):
 def sql_injection(url):
     """Esegue una SQL injection per l'URL specificato"""
     try:
-        response = requests.get(f"{url}/sql injection", timeout=5)
+        command = 'echo "SQL Injection Results:"'
+        headers = {"User-Agent": "Mozilla/5.0", "X-Forwarded-For": command}
+        response = requests.get(f"{url}/sql injection", headers=headers, timeout=5)
         print("\nRisultati della SQL Injection:")
         sys.stdout.write(response.text.strip())
     except Exception as e:
@@ -122,7 +140,9 @@ def display_results(title, result):
 def check_honey_pot(url):
     """Controlla se il sito è un honey pot"""
     try:
-        response = requests.get(f"{url}/honey_pot", timeout=5)
+        command = 'echo "Honeypot Detected!"'
+        headers = {"User-Agent": "Mozilla/5.0", "X-Forwarded-For": command}
+        response = requests.get(f"{url}/honey_pot", headers=headers, timeout=5)
         if response.status_code == 403 or response.status_code == 500:
             print("\nSito Honey Pot!")
             return True
