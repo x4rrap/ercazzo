@@ -1,36 +1,11 @@
 import os
 import requests
-from termcolor import colored
 from bs4 import BeautifulSoup
+from termcolor import colored
 
 def pulisci_schermo():
     """Pulisce lo schermo del terminale."""
     os.system('cls' if os.name == 'nt' else 'clear')
-
-def disegna_ascii(position):
-    """Genera un frame dell'arte ASCII in una data posizione."""
-    arte = f"""
-{position * " "} _,.-Y  |  |  Y-._
-{position * " }.{"-" * 4}   ||  |  |  |   {"-" * 3}.
-{position * " "}I" ""=="|" !""! "|"[]""|     _____
-{position * " "}L__  [] |..------|:   _[----I" .-{{"-.
-{position * " "}I___|  ..| l______|l_ [__L]_[I_/r(}}=-P
-{position * " "[L______L_[________]______j~  '-=c_]/=-^
-{position * " "} \\_I_j.--.\\==I|I==_/.--L_
-{position * " "}   [_((==)[`-----`](==)j
-{position * " "}      I--I"~~"""~~"I--I
-{position * " "}      |[]|         |[]|
-{position * " "}      l__j         l__j
-{position * " "}      |!!|         |!!|
-{position * " "}      |..|         |..|
-{position * " "}      ([])         ([])]
-{position * " "}      ]--[         ]--[
-{position * " "}      [_L]         [_L] -l'era di un nuovo mondo.
-{position * " "}     /|..|\\       /|..|\\
-{position * " "}    `=}--{{=`     `=}--{{=`
-{position * " "}   .-^--r-^-.   .-^--r-^-.
-"""
-    return arte
 
 def whois_lookup(url):
     """Esegue un Whois lookup per l'URL specificato"""
@@ -126,21 +101,50 @@ def display_results(title, result):
     print("| " + result)
     print("+" + "-" * len(result) + "+")
 
-def main():
-    url = input("Inserisci l'URL del sito web da analizzare (es. http://example.com, https://example.onion o http://example.gov): ")
+def check_honey_pot(url):
+    """Controlla se il sito è un honey pot"""
+    try:
+        response = requests.get(f"{url}/honey_pot", timeout=5)
+        if response.status_code == 403 or response.status_code == 500:
+            print("\nSito Honey Pot!")
+            return True
+        else:
+            return False
+    except Exception as e:
+        print(f"Errore durante il controllo del sito honey pot: {e}")
+        return None
+
+def scan_site(url):
+    """Scanna il sito web"""
+    print(f"\nScansione in corso su {url}...")
     
-    # Disegna l'arte ASCII
-    for i in range(20):
-        pulisci_schermo()
-        print(disegna_ascii(i))
-        time.sleep(0.1)
+    # Attiva Tor per la scansione anonima
+    os.system("tor")
 
     whois_lookup(url)
-    find_admin_page(url)
-    bypass_waf(url)
-    bypass_cloudflare(url)
-    sql_injection(url)
-    scan_vulnerabilities(url)
+    if not check_honey_pot(url):  # Se non è un honey pot
+        bypass_waf(url)
+        bypass_cloudflare(url)
+        sql_injection(url)
+        scan_vulnerabilities(url)
+
+        # Estrae informazioni dal sito
+        response = requests.get(url, timeout=5)
+        soup = BeautifulSoup(response.text, "html.parser")
+        info = soup.find_all("meta")
+        for i in info:
+            print(f"\nInformazione trovata: {i['name']} - {i['content']}")
+        
+        # Avvisa se la pagina admin è stata trovata e fornisce il link
+        find_admin_page(url)
+    else:
+        print("\nSito honey pot, scan abbandonato.")
 
 if __name__ == "__main__":
-    main()
+    url = input("Inserisci l'URL del sito web da analizzare (es. http://example.com, https://example.onion o http://example.gov): ")
+    
+    # Pulizia dello schermo
+    pulisci_schermo()
+    
+    # Scansione del sito
+    scan_site(url)
