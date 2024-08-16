@@ -1,8 +1,9 @@
 import os
 import subprocess
 import requests
+import re
 import time
-from tqdm import tqdm  # Per mostrare la barra di progresso
+from tqdm import tqdm
 from bs4 import BeautifulSoup, Comment
 
 def pulisci_schermo():
@@ -16,7 +17,7 @@ def display_ascii_art():
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣤⣶⣾⣿⡉⢤⣍⡓⢶⣶⣦⣤⣉⠒⠤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⣿⣿⣿⣿⣿⣷⡀⠙⣿⣷⣌⠻⣿⣿⣿⣶⣌⢳⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣄⠈⢿⣿⡆⠹⣿⣿⣿⣿⣷⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄⠹⣿⡄⢻⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣄⠹⣿⡄⢻⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠿⣿⣿⣷⣽⣷⢸⣿⡿⣿⡿⠿⠿⣆⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⡄⠀⠀⠀⠐⠾⢭⣭⡼⠟⠃⣤⡆⠘⢟⢺⣦⡀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⡿⠁⠀⠀⠀⠀
@@ -32,7 +33,7 @@ def display_ascii_art():
 ⣼⠋⢁⣴⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣎⠻⠟⠋⣠⣴⣿⣿⣿⣿⠿⠋⠁⠀⠀
 ⢿⣷⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⣴⠀⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⣠⣾⣿⠿⠿⠟⠋⠁⠀⠀⠀⠀⠀
 ⠀⠉⠛⠛⠿⠿⠿⢿⣿⣿⣿⣵⣾⣿⣧⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠉⠉⠉⠉⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠉⠉⠉⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
                 
 by hagg4r""")
 
@@ -55,98 +56,83 @@ def find_admin_page(url):
             print("\nPagina Admin trovata!")
             print(f"URL: {response.url}")
 
+            # Estrae le email e altre informazioni utili dalla pagina
+            emails = re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', response.text)
+            if emails:
+                print("\nEmail trovate nella pagina admin:")
+                for email in emails:
+                    print(email)
+
             # Scarica la pagina admin in un file HTML
             html_file_path = os.path.join(os.path.expanduser("~"), "Desktop", f"{url.replace('/', '')}_admin.html")
-            with open(html_file_path, "w", encoding="utf-8") as file:
+            with open(html_file_path, 'w') as file:
                 file.write(response.text)
+            print(f"Pagina admin salvata in {html_file_path}")
 
-            print(f"La pagina admin è stata scaricata come HTML in: {html_file_path}")
         else:
-            print("\nPagina Admin non trovata.")
-    except requests.RequestException as e:
-        print(f"\nErrore durante la richiesta alla pagina admin: {e}")
+            print("Pagina admin non trovata.")
+    except Exception as e:
+        print(f"Errore durante la ricerca della pagina admin: {e}")
 
-def check_robots_txt(url):
-    """Controlla se il sito web ha un file robots.txt"""
+def scan_for_errors(url):
+    """Scansiona il sito per errori comuni e debolezze di sicurezza"""
+    error_patterns = [
+        "404 Not Found", "500 Internal Server Error", "403 Forbidden",
+        "SQL syntax", "Error establishing a database connection", "PHP Warning"
+    ]
     headers = {"User-Agent": "Mozilla/5.0"}
     try:
-        response = requests.get(f"http://{url}/robots.txt", headers=headers, timeout=5)
-        if response.status_code == 200:
-            print("\nrobots.txt trovato!")
-            print(response.text)
-        else:
-            print("\nrobots.txt non trovato.")
-    except requests.RequestException as e:
-        print(f"\nErrore durante la richiesta a robots.txt: {e}")
+        response = requests.get(f"http://{url}", headers=headers, timeout=10)
+        page_content = response.text
 
-def extract_html_comments(url):
-    """Estrae i commenti HTML dalla homepage del sito web"""
-    headers = {"User-Agent": "Mozilla/5.0"}
+        print("\nScansione errori:")
+        for pattern in error_patterns:
+            if pattern in page_content:
+                print(f"Trovato errore: {pattern}")
+    except Exception as e:
+        print(f"Errore durante la scansione degli errori: {e}")
+
+def bypass_waf_cloudflare(url):
+    """Cerca di bypassare WAF e Cloudflare per accedere alla pagina admin"""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    }
     try:
-        response = requests.get(f"http://{url}", headers=headers, timeout=5)
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, "html.parser")
-            comments = soup.find_all(string=lambda text: isinstance(text, Comment))
-            if comments:
-                print("\nCommenti HTML trovati:")
-                for comment in comments:
-                    print(comment)
-            else:
-                print("\nNessun commento HTML trovato.")
-        else:
-            print("\nImpossibile accedere alla homepage del sito.")
-    except requests.RequestException as e:
-        print(f"\nErrore durante la richiesta alla homepage: {e}")
-
-def run_uniscan_scan(url):
-    """Esegue una scansione Uniscan sul sito web"""
-    print("\nEsecuzione della scansione Uniscan...")
-    uniscan_command = ["uniscan", "-u", f"http://{url}", "-qweds"]
-    result = subprocess.run(uniscan_command, capture_output=True, text=True)
-    print(result.stdout)
-
-def run_sqli_detector(url):
-    """Esegue SQLiDetector per trovare vulnerabilità di SQL Injection"""
-    print("\nEsecuzione di SQLiDetector...")
-    sqli_command = ["python3", "SQLiDetector/sqlidetector.py", "-u", f"http://{url}"]
-    result = subprocess.run(sqli_command, capture_output=True, text=True)
-    print(result.stdout)
-
-def upload_to_github():
-    """Carica i risultati su GitHub (Brahmastra repository)"""
-    print("\nCaricamento dei risultati su GitHub...")
-    try:
-        subprocess.run(["git", "add", "."], check=True)
-        subprocess.run(["git", "commit", "-m", "'Aggiunta automatica dei risultati'"], check=True)
-        subprocess.run(["git", "push"], check=True)
-        print("Caricamento completato con successo.")
-    except subprocess.CalledProcessError as e:
-        print(f"Errore durante il caricamento su GitHub: {e}")
+        # Tentativi di accesso diretto alla pagina admin
+        possible_paths = [
+            "/admin", "/admin.php", "/administrator", "/wp-login.php", "/wp-admin"
+        ]
+        for path in possible_paths:
+            full_url = f"http://{url}{path}"
+            response = requests.get(full_url, headers=headers, timeout=10)
+            if response.status_code == 200:
+                print(f"Accesso riuscito alla pagina admin: {full_url}")
+                return full_url
+        print("Nessun accesso riuscito.")
+        return None
+    except Exception as e:
+        print(f"Errore durante il bypass di WAF/Cloudflare: {e}")
+        return None
 
 def main():
     pulisci_schermo()
     display_ascii_art()
-
     start_tor()
-
-    domain = input("Inserisci il dominio del sito web da testare (ad esempio example.com): ").strip()
-
-    url = f"http://{domain}"
-
-    # Barra di avanzamento
-    tasks = [
-        ("Ricerca pagina Admin", find_admin_page),
-        ("Controllo file robots.txt", check_robots_txt),
-        ("Estrazione commenti HTML", extract_html_comments),
-        ("Scansione Uniscan", run_uniscan_scan),
-        ("SQL Injection Detection", run_sqli_detector)
-    ]
-
-    for task_name, task_function in tqdm(tasks, desc="Progress", ncols=100):
-        print(f"\nInizio: {task_name}")
-        task_function(domain)
-
-    upload_to_github()
-
+    
+    url = input("Inserisci l'URL del sito (senza 'http://'): ")
+    
+    print("\nRicerca della pagina admin...")
+    find_admin_page(url)
+    
+    print("\nScansione del sito per errori...")
+    scan_for_errors(url)
+    
+    print("\nTentativo di bypass di WAF/Cloudflare...")
+    admin_url = bypass_waf_cloudflare(url)
+    if admin_url:
+        print(f"Pagina admin accessibile a: {admin_url}")
+    else:
+        print("Non è stato possibile bypassare WAF/Cloudflare.")
+    
 if __name__ == "__main__":
     main()
