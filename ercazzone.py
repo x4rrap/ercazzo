@@ -9,8 +9,7 @@ def pulisci_schermo():
 
 def display_ascii_art():
     """Mostra il disegno ASCII all'inizio dell'esecuzione"""
-    print(f"         
-                       .-.
+    print("""          .-.
                       |_:_|
                      /(_Y_)\
 .                   ( \/M\/ )
@@ -33,8 +32,8 @@ def display_ascii_art():
           /___.-/_|-'   \  \
                          '-'
                 
-by hagg4r")
-
+by hagg4r""")
+                         
 def find_admin_page(url):
     """Trova la pagina admin del sito web"""
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -204,7 +203,7 @@ if __name__ == "__main__":
     
     # Pulizia dello schermo
     pulisci_schermo()
-    
+
     # Mostra il disegno ASCII all'inizio dell'esecuzione
     display_ascii_art()
 
