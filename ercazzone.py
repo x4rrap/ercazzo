@@ -9,7 +9,8 @@ def pulisci_schermo():
 
 def display_ascii_art():
     """Mostra il disegno ASCII all'inizio dell'esecuzione"""
-    print(f"           .-.
+    print(f"         
+                       .-.
                       |_:_|
                      /(_Y_)\
 .                   ( \/M\/ )
