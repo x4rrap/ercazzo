@@ -3,27 +3,20 @@ import requests
 from termcolor import colored
 from bs4 import BeautifulSoup
 
-# Import required libraries for OWASP ZAP
-import subprocess
-import zipfile
-import time
-import sys
-
 def pulisci_schermo():
     """Pulisce lo schermo del terminale."""
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def disegna_ascii(position, sparando=False):
+def disegna_ascii(position):
     """Genera un frame dell'arte ASCII in una data posizione."""
-    proiettile = " |-->\n" if sparando else " |\n"
     arte = f"""
 {position * " "} _,.-Y  |  |  Y-._
-{position * " "}.{"-" * 4}   ||  |  |  |   {"-" * 3}.
+{position * " }.{"-" * 4}   ||  |  |  |   {"-" * 3}.
 {position * " "}I" ""=="|" !""! "|"[]""|     _____
 {position * " "}L__  [] |..------|:   _[----I" .-{{"-.
-{position * " "}I___|  ..| l______|l_ [__L]_[I_/r(}}=-P{proiettile}
-{position * " "}[L______L_[________]______j~  '-=c_]/=-^
-{position * " "} \\_I_j.--.\\==I|I==_/.--L_]
+{position * " "}I___|  ..| l______|l_ [__L]_[I_/r(}}=-P
+{position * " "[L______L_[________]______j~  '-=c_]/=-^
+{position * " "} \\_I_j.--.\\==I|I==_/.--L_
 {position * " "}   [_((==)[`-----`](==)j
 {position * " "}      I--I"~~"""~~"I--I
 {position * " "}      |[]|         |[]|
@@ -38,18 +31,6 @@ def disegna_ascii(position, sparando=False):
 {position * " "}   .-^--r-^-.   .-^--r-^-.
 """
     return arte
-
-def anima_ascii():
-    """Anima l'arte ASCII spostandola attraverso lo schermo."""
-    for i in range(20):
-        pulisci_schermo()
-        sparando = (i % 5 == 0)  # Spara ogni 5 frame
-        print(disegna_ascii(i, sparando))
-        time.sleep(0.1)
-
-def ascii_art():
-    """Anima e stampa l'arte ASCII di H4ggar"""
-    anima_ascii()
 
 def whois_lookup(url):
     """Esegue un Whois lookup per l'URL specificato"""
@@ -147,10 +128,12 @@ def display_results(title, result):
 
 def main():
     url = input("Inserisci l'URL del sito web da analizzare (es. http://example.com, https://example.onion o http://example.gov): ")
-    ascii_art()
     
-    # Avvia Tor per il traffico anonimo
-    os.system("tor")
+    # Disegna l'arte ASCII
+    for i in range(20):
+        pulisci_schermo()
+        print(disegna_ascii(i))
+        time.sleep(0.1)
 
     whois_lookup(url)
     find_admin_page(url)
