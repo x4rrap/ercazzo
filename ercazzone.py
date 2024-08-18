@@ -3,12 +3,7 @@ import subprocess
 import requests
 import re
 import time
-import whois
-from tqdm import tqdm
 from bs4 import BeautifulSoup, Comment
-from scapy.all import sr1, IP, ICMP
-from socket import gethostbyname, gethostbyaddr
-import json
 
 def pulisci_schermo():
     """Pulisce lo schermo del terminale."""
@@ -16,8 +11,8 @@ def pulisci_schermo():
 
 def display_ascii_art():
     """Mostra il disegno ASCII all'inizio dell'esecuzione in verde."""
-    green = "\033[92m"
-    reset = "\033[0m"
+    green = "\033[92m"  # Codice colore verde
+    reset = "\033[0m"   # Codice per ripristinare il colore
     ascii_art = f"""
 {green}⠀⠀⠀⠀⠀⠀⠀    
                     ____
@@ -52,7 +47,6 @@ def display_ascii_art():
                 
 by hagg4r{reset}"""
     print(ascii_art)
-
 
 def start_tor():
     """Avvia Tor in background e nasconde l'output."""
