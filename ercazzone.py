@@ -3,6 +3,7 @@ import subprocess
 import requests
 import re
 import time
+import whois
 from bs4 import BeautifulSoup, Comment
 
 def pulisci_schermo():
@@ -13,6 +14,7 @@ def display_ascii_art():
     """Mostra il disegno ASCII all'inizio dell'esecuzione in verde."""
     green = "\033[92m"  # Codice colore verde
     reset = "\033[0m"   # Codice per ripristinare il colore
+    red = "\033[91m"    # Codice colore rosso (per l'arte ASCII)
     ascii_art = f"""
 {red}⠀⠀⠀⠀⠀⠀⠀    
 
@@ -182,6 +184,19 @@ def hosthunter_scan(domain):
     except Exception as e:
         print(f"Errore durante la scansione HostHunter: {e}")
 
+def whois_lookup(domain):
+    """Esegue una ricerca Whois per il dominio target."""
+    try:
+        print(f"Eseguendo ricerca Whois per il dominio {domain}...")
+        domain_info = whois.whois(domain)
+        print("Informazioni Whois:")
+        for key, value in domain_info.items():
+            if isinstance(value, list):
+                value = ', '.join(value)
+            print(f"{key}: {value}")
+    except Exception as e:
+        print(f"Errore durante la ricerca Whois: {e}")
+
 def main():
     pulisci_schermo()
     display_ascii_art()
@@ -189,6 +204,7 @@ def main():
     start_tor()
 
     target_url = input("Inserisci il sito web target (senza http/https): ")
+    whois_lookup(target_url)  # Nuovo step per la ricerca Whois
     find_admin_page(target_url)
     scan_for_errors(f"http://{target_url}")
     google_dorks_search(target_url)
