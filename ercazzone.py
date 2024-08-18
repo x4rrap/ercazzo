@@ -16,7 +16,7 @@ def display_matrix_effect(duration=5):
     """Mostra un effetto di caratteri che scendono in stile Matrix."""
     columns = 80  # Dimensione tipica del terminale
     rows = 24     # Dimensione tipica del terminale
-    chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    chars = "ercazoercazzoercazzoerc4azzoercazzo3rc4zzoercazzonesucanegrodimerda1233909"
 
     end_time = time.time() + duration
     while time.time() < end_time:
@@ -176,8 +176,8 @@ def hosthunter_scan(domain):
 def perform_whois_lookup(domain):
     """Esegue una ricerca WHOIS per il dominio e stampa i risultati"""
     try:
-        print(f"Eseguendo ricerca WHOIS per il dominio {domain}...")
-        whois_info = whois.whois(domain)
+        print(f"Eseguendo ricerca WHOIS per il dominio {url}...")
+        whois_info = whois.whois(url)
         print("Informazioni WHOIS trovate:")
         for key, value in whois_info.items():
             print(f"{key}: {value}")
