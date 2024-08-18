@@ -15,14 +15,16 @@ def pulisci_schermo():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 def display_ascii_art():
-    """Mostra il disegno ASCII all'inizio dell'esecuzione"""
-    print("""
-⠀⠀⠀⠀⠀⠀⠀                    ____
+    """Mostra il disegno ASCII all'inizio dell'esecuzione in verde."""
+    green = "\033[92m"
+    reset = "\033[0m"
+    ascii_art = f"""
+{green}⠀⠀⠀⠀⠀⠀⠀                    ____
                  _.' :  `._
              .-.'`.  ;   .'`.-.
     __      / : ___\ ;  /___ ; \      __
   ,'_ ""--.:__;".-.";: :".-.":__;.--"" _`,
-  :' `.t""--.. '<@.`;_  ',@>` ..--""j.' `;
+  :' `.t""--.. '<X.`;_  ',X>` ..--""j.' `;
        `:-.._J '-.-'L__ `-- ' L_..-;'
          "-.__ ;  .-"  "-.  : __.-"
              L ' /.------.\ ' J
@@ -47,7 +49,9 @@ def display_ascii_art():
                 \ `t  ._  /  by haggaruccio
                  "-.t-._:'⠀⠀
                 
-by hagg4r""")
+by hagg4r{reset}"""
+    print(ascii_art)
+
 
 def start_tor():
     """Avvia Tor in background e nasconde l'output."""
