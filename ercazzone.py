@@ -19,7 +19,8 @@ def display_ascii_art():
     green = "\033[92m"
     reset = "\033[0m"
     ascii_art = f"""
-{green}⠀⠀⠀⠀⠀⠀⠀                    ____
+{green}⠀⠀⠀⠀⠀⠀⠀    
+                    ____
                  _.' :  `._
              .-.'`.  ;   .'`.-.
     __      / : ___\ ;  /___ ; \      __
