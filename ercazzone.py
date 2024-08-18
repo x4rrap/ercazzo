@@ -3,20 +3,17 @@ import subprocess
 import requests
 import re
 import time
-import whois
 from bs4 import BeautifulSoup, Comment
+import whois
 
 def pulisci_schermo():
     """Pulisce lo schermo del terminale."""
     os.system('cls' if os.name == 'nt' else 'clear')
 
 def display_ascii_art():
-    """Mostra il disegno ASCII all'inizio dell'esecuzione in verde."""
-    green = "\033[92m"  # Codice colore verde
-    reset = "\033[0m"   # Codice per ripristinare il colore
-    red = "\033[91m"    # Codice colore rosso (per l'arte ASCII)
-    ascii_art = f"""
-{red}⠀⠀⠀⠀⠀⠀⠀    
+    """Mostra il disegno ASCII all'inizio dell'esecuzione."""
+    ascii_art = """
+⠀⠀⠀⠀⠀⠀⠀    
 
                                    z11                               
                                    z@d                               
@@ -50,8 +47,7 @@ jdd@j1""                    "zj@d@.   00z       .jjd1 @@
                                .11j                             j@0" 
                                j@0                               zj1 
                                j0j
-
-by hagg4r{reset}"""
+"""
     print(ascii_art)
 
 def start_tor():
@@ -184,18 +180,15 @@ def hosthunter_scan(domain):
     except Exception as e:
         print(f"Errore durante la scansione HostHunter: {e}")
 
-def whois_lookup(domain):
-    """Esegue una ricerca Whois per il dominio target."""
+def perform_whois_lookup(domain):
+    """Esegue una ricerca WHOIS per il dominio e visualizza i risultati."""
     try:
-        print(f"Eseguendo ricerca Whois per il dominio {domain}...")
-        domain_info = whois.whois(domain)
-        print("Informazioni Whois:")
-        for key, value in domain_info.items():
-            if isinstance(value, list):
-                value = ', '.join(value)
+        whois_info = whois.whois(domain)
+        print("\nInformazioni WHOIS trovate:")
+        for key, value in whois_info.items():
             print(f"{key}: {value}")
     except Exception as e:
-        print(f"Errore durante la ricerca Whois: {e}")
+        print(f"Errore durante la ricerca WHOIS: {e}")
 
 def main():
     pulisci_schermo()
@@ -204,11 +197,11 @@ def main():
     start_tor()
 
     target_url = input("Inserisci il sito web target (senza http/https): ")
-    whois_lookup(target_url)  # Nuovo step per la ricerca Whois
     find_admin_page(target_url)
     scan_for_errors(f"http://{target_url}")
     google_dorks_search(target_url)
     hosthunter_scan(target_url)
+    perform_whois_lookup(target_url)
 
 if __name__ == "__main__":
     main()
