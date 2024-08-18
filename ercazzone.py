@@ -49,10 +49,16 @@ def install_tool(tool_name, install_command):
     try:
         subprocess.run([tool_name, '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         print(f"{tool_name} è già installato.")
+        return True
     except FileNotFoundError:
         print(f"{tool_name} non trovato. Installazione in corso...")
-        subprocess.run(install_command, shell=True)
-        print(f"{tool_name} installato correttamente.")
+        try:
+            subprocess.run(install_command, shell=True, check=True)
+            print(f"{tool_name} installato correttamente.")
+            return True
+        except subprocess.CalledProcessError as e:
+            print(f"Errore durante l'installazione di {tool_name}: {e}")
+            return False
 
 def install_required_tools():
     """Installa i tool necessari se non sono presenti."""
@@ -62,8 +68,11 @@ def install_required_tools():
     # Installazione di HostHunter
     if not os.path.exists('HostHunter'):
         print("Clonazione di HostHunter da GitHub...")
-        subprocess.run('git clone https://github.com/SpiderLabs/HostHunter.git', shell=True)
-        print("HostHunter installato correttamente.")
+        try:
+            subprocess.run('git clone https://github.com/SpiderLabs/HostHunter.git', shell=True, check=True)
+            print("HostHunter installato correttamente.")
+        except subprocess.CalledProcessError as e:
+            print(f"Errore durante la clonazione di HostHunter: {e}")
     else:
         print("HostHunter è già presente.")
 
@@ -119,7 +128,7 @@ def brute_force_hydra(url, login_path):
             text=True
         )
         print(f"Risultati Hydra:\n{result}")
-    except Exception as e:
+    except subprocess.CalledProcessError as e:
         print(f"Errore durante il brute force con Hydra: {e}")
 
 def scan_for_errors(url):
@@ -159,9 +168,9 @@ def hosthunter_scan(domain):
     """Esegue la scansione dei sottodomini utilizzando HostHunter."""
     try:
         print(f"Eseguendo scansione HostHunter per il dominio {domain}...")
-        result = subprocess.check_output(['python3', 'HostHunter.py', '-d', domain], text=True)
+        result = subprocess.check_output(['python3', 'HostHunter/HostHunter.py', '-d', domain], text=True)
         print(f"Risultati HostHunter:\n{result}")
-    except Exception as e:
+    except subprocess.CalledProcessError as e:
         print(f"Errore durante la scansione HostHunter: {e}")
 
 def perform_whois_lookup(domain):
