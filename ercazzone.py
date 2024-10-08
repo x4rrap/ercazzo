@@ -71,7 +71,7 @@ def install_required_tools():
         print("HostHunter è già presente.")
 
 def find_admin_page(url):
-    headers = {"User  -Agent": "Mozilla/5.0"}
+    headers = {"User -Agent": "Mozilla/5.0"}
     try:
         response = requests.get(f"http://{url}/wp-admin/", headers=headers, timeout=5)
         if response.status_code == 200:
@@ -103,7 +103,7 @@ def save_database_to_txt(url):
         txt_file_path = os.path.join(os.path.expanduser("~"), "Desktop", f"{url.replace('/', '')}_database.txt")
         with open(txt_file_path, 'w') as file:
             file.write(database_content)
-        print(f"\n Database salvato in {txt_file_path}")
+        print(f"\nDatabase salvato in {txt_file_path}")
     except Exception as e:
         print(f"Errore durante il salvataggio del database: {e}")
 
@@ -118,7 +118,7 @@ def brute_force_hydra(url, login_path):
 def nmap_scan(ip):
     print("\nInizio della scansione con Nmap...")
     try:
-        subprocess.run(['nmap', '-d1', '-d2', ip], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(['nmap', '-d1', '-d2', ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         print("Scansione con Nmap completata.")
     except Exception as e:
         print(f"Errore durante la scansione con Nmap: {e}")
