@@ -3,8 +3,7 @@ import subprocess
 import requests
 import re
 import time
-from bs4 import BeautifulSoup, Comment
-import whois
+from bs4 import BeautifulSoup
 import random
 import sys
 import sqlite3
@@ -16,7 +15,7 @@ def display_matrix_effect(duration=5):
     columns = 80  
     rows = 24     
     chars = "ercazoercazzoercazzoerc4azzoercazzo3rc4zzoercazzonesucanegrodimerda1233909"
-
+    
     end_time = time.time() + duration
     while time.time() < end_time:
         grid = [[' ' for _ in range(columns)] for _ in range(rows)]
@@ -59,6 +58,8 @@ def install_required_tools():
     install_tool('hydra', 'sudo apt-get install -y hydra')
     install_tool('git', 'sudo apt-get install -y git')
     install_tool('nmap', 'sudo apt-get install -y nmap')
+    install_tool('nikto', 'sudo apt-get install -y nikto')
+    install_tool('sqlmap', 'sudo apt-get install -y sqlmap')
 
     if not os.path.exists('HostHunter'):
         print("Clonazione di HostHunter da GitHub...")
@@ -71,7 +72,7 @@ def install_required_tools():
         print("HostHunter è già presente.")
 
 def find_admin_page(url):
-    headers = {"User -Agent": "Mozilla/5.0"}
+    headers = {"User-Agent": "Mozilla/5.0"}
     try:
         response = requests.get(f"http://{url}/wp-admin/", headers=headers, timeout=5)
         if response.status_code == 200:
@@ -89,48 +90,29 @@ def find_admin_page(url):
                 file.write(response.text)
             print(f"Pagina admin salvata in {html_file_path}")
 
-            save_database_to_txt(url)
-
-            brute_force_hydra(url, "/wp-login.php")
         else:
             print("Pagina Admin non trovata.")
     except Exception as e:
         print(f"Errore durante la ricerca della pagina admin: {e}")
 
-def save_database_to_txt(url):
-    database_content = "Simulazione dei dati del database estratti."
-    try:
-        txt_file_path = os.path.join(os.path.expanduser("~"), "Desktop", f"{url.replace('/', '')}_database.txt")
-        with open(txt_file_path, 'w') as file:
-            file.write(database_content)
-        print(f"\nDatabase salvato in {txt_file_path}")
-    except Exception as e:
-        print(f"Errore durante il salvataggio del database: {e}")
-
 def brute_force_hydra(url, login_path):
-    print("\nInizio dell'attacco di forza bruta con Hydra...")
-    try:
-        subprocess.run(['hydra', '-l', 'admin', '-P', 'passwords.txt', url, 'http-get', login_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        print("Attacco di forza bruta completato.")
-    except Exception as e:
-        print(f"Errore durante l'attacco di forza bruta: {e}")
+    print(f"Esecuzione di attacco brute force su {url} usando Hydra...")
 
-def nmap_scan(ip):
-    print("\nInizio della scansione con Nmap...")
-    try:
-        subprocess.run(['nmap', '-d1', '-d2', ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print("Scansione con Nmap completata.")
-    except Exception as e:
-        print(f"Errore durante la scansione con Nmap: {e}")
-
-def main():
-    display_matrix_effect(5)
-    start_tor()
-    install_required_tools()
-    url = input("Inserisci l'URL del sito web: ")
-    find_admin_page(url)
-    ip = input("Inserisci l'IP del sito web: ")
-    nmap_scan(ip)
+def show_ctf_cheatsheet():
+    cheatsheet = """
+    Comandi utili per CTF:
+    
+    1. SQL Injection: sqlmap -u <url> --dbs
+    2. XSS: Usa payload comuni di XSS per testare form.
+    3. Brute Force Login: hydra -l admin -P passwords.txt <url> http-post-form "/login.php:username=^USER^&password=^PASS^:F=failed"
+    4. Scansione Nmap: nmap -sC -sV -oA output <url>
+    5. Nikto Scan: nikto -h <url>
+    """
+    print(cheatsheet)
 
 if __name__ == "__main__":
-    main()
+    pulisci_schermo()
+    display_matrix_effect()
+    install_required_tools()
+    find_admin_page('example.com')
+    show_ctf_cheatsheet()
