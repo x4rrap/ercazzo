@@ -3,6 +3,7 @@ import subprocess
 import requests
 import socket
 from bs4 import BeautifulSoup
+import re
 
 def run_command(command):
     """Esegui un comando di sistema e restituisci l'output."""
@@ -36,80 +37,64 @@ def nmap_scan(ip):
         "nmap_servizi": ["nmap", "-sV", ip],
         "nmap_os_detection": ["nmap", "-O", ip],
         "nmap_vuln_scan": ["nmap", "--script", "vuln", ip],
-        "nmap_debug_1": ["nmap", "-d1", ip],
-        "nmap_debug_2": ["nmap", "-d2", ip],
-        "nmap_full": ["nmap", "-A", ip],  # Scansione completa
-        "nmap_tcp_scan": ["nmap", "-sS", ip]  # TCP SYN scan
+        "nmap_debug1": ["nmap", "-d1", ip],
+        "nmap_debug2": ["nmap", "-d2", ip],
+        "nmap_full_scan": ["nmap", "-A", ip],
+        "nmap_syn_scan": ["nmap", "-sS", ip],
     }
     
     for nome_scansione, comando in scansioni.items():
         print(f"\nEsecuzione {nome_scansione} su {ip}...")
         stdout, stderr = run_command(comando)
-        success_percentage = calculate_success_percentage(stdout, stderr)
         if stdout:
             print(f"Risultati {nome_scansione}:\n", stdout)
             salva_su_desktop(f"{nome_scansione}_{ip}.txt", stdout)
         if stderr:
             print(f"Errori durante {nome_scansione}:\n", stderr)
-        print(f"Percentuale di successo {nome_scansione}: {success_percentage:.2f}%")
-
-def calculate_success_percentage(stdout, stderr):
-    """Calcola la percentuale di successo basata sull'output."""
-    total_lines = len(stdout.splitlines()) + len(stderr.splitlines())
-    successful_lines = len(stdout.splitlines())
-    return (successful_lines / total_lines * 100) if total_lines > 0 else 0
 
 def esegui_openssl(dominio):
-    """Visualizza i certificati SSL del dominio usando OpenSSL."""
-    print(f"\nControllo dei certificati SSL per {dominio}...")
+    """Controlla i certificati SSL del dominio."""
     comando = ["openssl", "s_client", "-connect", f"{dominio}:443"]
+    print(f"\nControllo certificati SSL per {dominio}...")
     stdout, stderr = run_command(comando)
-    success_percentage = calculate_success_percentage(stdout, stderr)
     if stdout:
-        print(f"Certificati SSL:\n", stdout)
-        salva_su_desktop(f"certificati_ssl_{dominio}.txt", stdout)
+        print(f"Certificati SSL trovati:\n", stdout)
+        salva_su_desktop(f"openssl_{dominio}.txt", stdout)
     if stderr:
-        print(f"Errori durante il controllo SSL:\n", stderr)
-    print(f"Percentuale di successo controllo SSL: {success_percentage:.2f}%")
+        print(f"Errori durante il controllo dei certificati SSL:\n", stderr)
 
 def esegui_whatweb(dominio):
     """Esegui whatweb per identificare le tecnologie del sito web."""
     comando = ["whatweb", dominio]
     print(f"\nEsecuzione whatweb su {dominio}...")
     stdout, stderr = run_command(comando)
-    success_percentage = calculate_success_percentage(stdout, stderr)
     if stdout:
         print(f"Risultati whatweb:\n", stdout)
         salva_su_desktop(f"whatweb_{dominio}.txt", stdout)
     if stderr:
         print(f"Errori durante whatweb:\n", stderr)
-    print(f"Percentuale di successo whatweb: {success_percentage:.2f}%")
 
 def esegui_subfinder(dominio):
     """Esegui subfinder per trovare i sottodomini del sito."""
     comando = ["subfinder", "-d", dominio]
     print(f"\nEsecuzione subfinder su {dominio}...")
     stdout, stderr = run_command(comando)
-    success_percentage = calculate_success_percentage(stdout, stderr)
     if stdout:
         print(f"Sottodomini trovati:\n", stdout)
         salva_su_desktop(f"subfinder_{dominio}.txt", stdout)
     if stderr:
         print(f"Errori durante subfinder:\n", stderr)
-    print(f"Percentuale di successo subfinder: {success_percentage:.2f}%")
 
 def esegui_uniscan(dominio):
     """Esegui uniscan per cercare directory e vulnerabilità comuni."""
     comando = ["uniscan", "-u", dominio, "-qweds"]
     print(f"\nEsecuzione uniscan su {dominio}...")
     stdout, stderr = run_command(comando)
-    success_percentage = calculate_success_percentage(stdout, stderr)
     if stdout:
         print(f"Risultati uniscan:\n", stdout)
         salva_su_desktop(f"uniscan_{dominio}.txt", stdout)
     if stderr:
         print(f"Errori durante uniscan:\n", stderr)
-    print(f"Percentuale di successo uniscan: {success_percentage:.2f}%")
 
 def esegui_dorks(dominio, dorks_file):
     """Esegui le Google Dorks per trovare pagine sensibili sul sito."""
@@ -127,13 +112,10 @@ def esegui_dorks(dominio, dorks_file):
                 for link in links:
                     print(f"Dork: {dork}\nLink: {link}")
                     salva_su_desktop(f"google_dorks_{dominio}.txt", f"Dork: {dork}\nLink: {link}")
-                print(f"Percentuale di successo dork {dork}: 100.00%")
             else:
                 print(f"Errore nella ricerca con Dork {dork}. Status code: {response.status_code}")
-                print(f"Percentuale di successo dork {dork}: 0.00%")
         except Exception as e:
             print(f"Errore durante la ricerca con Dork {dork}: {e}")
-            print(f"Percentuale di successo dork {dork}: 0.00%")
 
 def mostra_pagine_login(dominio):
     """Mostra le pagine di login e admin tramite Dorks."""
@@ -160,49 +142,65 @@ def mostra_pagine_login(dominio):
                 for link in links:
                     print(f"Pagine admin/login trovate:\nDork: {dork}\nLink: {link}")
                     salva_su_desktop(f"pagine_login_{dominio}.txt", f"Dork: {dork}\nLink: {link}")
-                print(f"Percentuale di successo dork {dork}: 100.00%")
             else:
                 print(f"Errore nella ricerca delle pagine login/admin con Dork {dork}. Status code: {response.status_code}")
-                print(f"Percentuale di successo dork {dork}: 0.00%")
         except Exception as e:
             print(f"Errore durante la ricerca delle pagine login/admin con Dork {dork}: {e}")
-                        print(f"Errore durante la ricerca delle pagine login/admin con Dork {dork}: {e}")
-            print(f"Percentuale di successo dork {dork}: 0.00%")
+
+def verifica_honeypot(dominio):
+    """Verifica se il sito è un honeypot."""
+    honeypot_keywords = ["honeypot", "trap", "bait", "honeypots"]
+    try:
+        response = requests.get(f"http://{dominio}")
+        if response.status_code == 200:
+            content = response.text.lower()
+            for keyword in honeypot_keywords:
+                if keyword in content:
+                    print(f"Il sito {dominio} sembra essere un honeypot. Messaggio: sucate merde.")
+                    return True
+    except Exception as e:
+        print(f"Errore durante la verifica dell'honeypot per {dominio}: {e}")
+    return False
 
 def esegui_ftpunch(ip):
     """Esegui FTPunch per attaccare il server FTP."""
     comando = ["python3", "FTPunch.py", ip]  # Assicurati che FTPunch.py sia nel tuo percorso
     print(f"\nEsecuzione FTPunch su {ip}...")
     stdout, stderr = run_command(comando)
-    success_percentage = calculate_success_percentage(stdout, stderr)
     if stdout:
         print(f"Risultati FTPunch:\n", stdout)
         salva_su_desktop(f"ftpunch_{ip}.txt", stdout)
     if stderr:
         print(f"Errori durante FTPunch:\n", stderr)
-    print(f"Percentuale di successo FTPunch: {success_percentage:.2f}%")
 
 def esegui_androbugs(dominio):
     """Esegui AndroBugs per analizzare le vulnerabilità delle app Android."""
     comando = ["python3", "AndroBugs_Framework.py", dominio]  # Assicurati che AndroBugs_Framework.py sia nel tuo percorso
     print(f"\nEsecuzione AndroBugs su {dominio}...")
     stdout, stderr = run_command(comando)
-    success_percentage = calculate_success_percentage(stdout, stderr)
     if stdout:
         print(f"Risultati AndroBugs:\n", stdout)
         salva_su_desktop(f"androbugs_{dominio}.txt", stdout)
     if stderr:
         print(f"Errori durante AndroBugs:\n", stderr)
-    print(f"Percentuale di successo AndroBugs: {success_percentage:.2f}%")
 
 def main():
     """Funzione principale per eseguire le scansioni."""
     dominio = input("Inserisci il dominio del sito web (es: example.com): ")
-    dorks_file = '/mnt/data/google-dorks.txt'  # Caricamento del file di dorks caricato
     
+    # Supporto per domini .onion e .gov
+    if not re.match(r'^(http://|https://)?([a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,6}|[a-zA-Z0-9\-\.]+\.onion|[a-zA-Z0-9\-\.]+\.gov)$', dominio):
+        print("Dominio non valido. Assicurati che sia un dominio pubblico, .onion o .gov.")
+        return
+
+    dorks_file = '/mnt/data/google-dorks.txt'  # Caricamento del file di dorks caricato
     ip = risolvi_ip(dominio)
     
     if ip:
+        if verifica_honeypot(dominio):
+            print("Operazione annullata poiché il sito è un honeypot.")
+            return
+        
         # Esecuzione delle scansioni Nmap
         nmap_scan(ip)
         
@@ -235,4 +233,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
