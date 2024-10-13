@@ -3,7 +3,6 @@ import subprocess
 import requests
 import socket
 from bs4 import BeautifulSoup
-from datetime import datetime
 
 def run_command(command):
     """Esegui un comando di sistema e restituisci l'output."""
@@ -32,92 +31,97 @@ def risolvi_ip(dominio):
         return None
 
 def nmap_scan(ip):
-    """Esegui una scansione nmap di base su un IP."""
-    print(f"\nEseguendo nmap su {ip}...")
-    comando = ["nmap", "-d1", ip]
+    """Esegui diverse scansioni nmap sull'IP del dominio."""
+    scansioni = {
+        "nmap_base": ["nmap", "-d1", ip],
+        "nmap_ping_bypass": ["nmap", "-Pn", ip],
+        "nmap_os_service_version": ["nmap", "-A", ip],
+        "nmap_vuln_scan": ["nmap", "--script", "vuln", ip]
+    }
+    
+    for nome_scansione, comando in scansioni.items():
+        print(f"\nEsecuzione {nome_scansione} su {ip}...")
+        stdout, stderr = run_command(comando)
+        if stdout:
+            print(f"Risultati {nome_scansione}:\n", stdout)
+            salva_su_desktop(f"{nome_scansione}_{ip}.txt", stdout)
+        if stderr:
+            print(f"Errori durante {nome_scansione}:\n", stderr)
+
+def esegui_whatweb(dominio):
+    """Esegui whatweb per identificare le tecnologie del sito web."""
+    comando = ["whatweb", dominio]
+    print(f"\nEsecuzione whatweb su {dominio}...")
     stdout, stderr = run_command(comando)
     if stdout:
-        print("Risultati nmap:\n", stdout)
-        salva_su_desktop(f"nmap_scan_{ip}.txt", stdout)
+        print(f"Risultati whatweb:\n", stdout)
+        salva_su_desktop(f"whatweb_{dominio}.txt", stdout)
     if stderr:
-        print("Errori durante la scansione nmap:\n", stderr)
+        print(f"Errori durante whatweb:\n", stderr)
 
-def ottieni_info_database(dominio):
-    """Tenta di identificare il database e la tecnologia su cui si basa il sito."""
-    try:
-        url = f"http://{dominio}"
-        response = requests.get(url, timeout=5)
-        if response.status_code == 200:
-            server = response.headers.get('Server', 'Sconosciuto')
-            powered_by = response.headers.get('X-Powered-By', 'Non specificato')
-            print(f"Server: {server}")
-            print(f"X-Powered-By: {powered_by}")
-            salva_su_desktop(f"info_server_{dominio}.txt", f"Server: {server}\nX-Powered-By: {powered_by}")
-            
-            # Aggiunta di controllo per individuare il database tramite tecniche di fingerprinting HTTP
-            if 'php' in powered_by.lower():
-                print("Potrebbe essere usato MySQL o MariaDB.")
-                salva_su_desktop(f"info_server_{dominio}.txt", "Database: MySQL/MariaDB (presunto)")
-            elif 'asp' in powered_by.lower():
-                print("Potrebbe essere usato Microsoft SQL Server.")
-                salva_su_desktop(f"info_server_{dominio}.txt", "Database: Microsoft SQL Server (presunto)")
-            elif 'java' in powered_by.lower() or 'spring' in powered_by.lower():
-                print("Potrebbe essere usato PostgreSQL o Oracle.")
-                salva_su_desktop(f"info_server_{dominio}.txt", "Database: PostgreSQL/Oracle (presunto)")
-        else:
-            print(f"Il sito {dominio} ha restituito uno status code: {response.status_code}")
-    except requests.RequestException as e:
-        print(f"Errore durante l'accesso al sito {dominio}: {e}")
-
-def esegui_nmap_servizi(ip):
-    """Esegui una scansione nmap più dettagliata per determinare i servizi attivi."""
-    print(f"\nEseguendo nmap per determinare i servizi attivi su {ip}...")
-    comando = ["nmap", "-sV", ip]
+def esegui_subfinder(dominio):
+    """Esegui subfinder per trovare i sottodomini del sito."""
+    comando = ["subfinder", "-d", dominio]
+    print(f"\nEsecuzione subfinder su {dominio}...")
     stdout, stderr = run_command(comando)
     if stdout:
-        print("Risultati dei servizi nmap:\n", stdout)
-        salva_su_desktop(f"nmap_servizi_{ip}.txt", stdout)
+        print(f"Sottodomini trovati:\n", stdout)
+        salva_su_desktop(f"subfinder_{dominio}.txt", stdout)
     if stderr:
-        print("Errori durante la scansione dei servizi nmap:\n", stderr)
+        print(f"Errori durante subfinder:\n", stderr)
 
-def esegui_banner_grabbing(ip):
-    """Esegui il banner grabbing per identificare i servizi e le versioni software."""
-    print(f"\nEseguendo il banner grabbing su {ip}...")
-    comando = ["nmap", "--script", "banner", ip]
+def esegui_uniscan(dominio):
+    """Esegui uniscan per cercare directory e vulnerabilità comuni."""
+    comando = ["uniscan", "-u", dominio, "-qweds"]
+    print(f"\nEsecuzione uniscan su {dominio}...")
     stdout, stderr = run_command(comando)
     if stdout:
-        print("Risultati del banner grabbing:\n", stdout)
-        salva_su_desktop(f"banner_grabbing_{ip}.txt", stdout)
+        print(f"Risultati uniscan:\n", stdout)
+        salva_su_desktop(f"uniscan_{dominio}.txt", stdout)
     if stderr:
-        print("Errori durante il banner grabbing:\n", stderr)
+        print(f"Errori durante uniscan:\n", stderr)
 
-def esegui_whois(dominio):
-    """Esegui una ricerca WHOIS sul dominio."""
-    print(f"\nEseguendo ricerca WHOIS per {dominio}...")
-    comando = ["whois", dominio]
-    stdout, stderr = run_command(comando)
-    if stdout:
-        print("Risultati WHOIS:\n", stdout)
-        salva_su_desktop(f"whois_{dominio}.txt", stdout)
-    if stderr:
-        print("Errori durante la ricerca WHOIS:\n", stderr)
+def esegui_dorks(dominio, dorks_file):
+    """Esegui le Google Dorks per trovare pagine sensibili sul sito."""
+    with open(dorks_file, 'r') as file:
+        dorks = [line.strip() for line in file.readlines()]
+    
+    print(f"\nEsecuzione delle Google Dorks su {dominio}...\n")
+    for dork in dorks:
+        url_dork = f"https://www.google.com/search?q={dork}+site:{dominio}"
+        try:
+            response = requests.get(url_dork)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                links = [a['href'] for a in soup.find_all('a', href=True)]
+                salva_su_desktop(f"google_dorks_{dominio}.txt", f"Dork: {dork}\nRisultati: {links}")
+            else:
+                print(f"Errore nella ricerca con Dork {dork}. Status code: {response.status_code}")
+        except Exception as e:
+            print(f"Errore durante la ricerca con Dork {dork}: {e}")
 
 def main():
     """Funzione principale per eseguire le scansioni."""
     dominio = input("Inserisci il dominio del sito web (es: example.com): ")
+    dorks_file = '/mnt/data/google-dorks.txt'  # Caricamento del file di dorks caricato
+    
     ip = risolvi_ip(dominio)
     
     if ip:
-        # Esegui Nmap scansioni
+        # Esecuzione delle scansioni Nmap
         nmap_scan(ip)
-        esegui_nmap_servizi(ip)
-        esegui_banner_grabbing(ip)
         
-        # Identifica informazioni del server e del database
-        ottieni_info_database(dominio)
+        # Esecuzione di WhatWeb per raccogliere informazioni sul server
+        esegui_whatweb(dominio)
         
-        # Esegui WHOIS
-        esegui_whois(dominio)
+        # Esecuzione di subfinder per individuare sottodomini
+        esegui_subfinder(dominio)
+        
+        # Scansione con Uniscan
+        esegui_uniscan(dominio)
+        
+        # Esecuzione delle Google Dorks per trovare pagine di login/admin
+        esegui_dorks(dominio, dorks_file)
     else:
         print("Impossibile proseguire senza l'IP del dominio.")
 
