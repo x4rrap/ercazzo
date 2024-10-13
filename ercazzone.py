@@ -33,9 +33,8 @@ def risolvi_ip(dominio):
 def nmap_scan(ip):
     """Esegui diverse scansioni nmap sull'IP del dominio."""
     scansioni = {
-        "nmap_base": ["nmap", "-d1", ip],
-        "nmap_ping_bypass": ["nmap", "-Pn", ip],
-        "nmap_os_service_version": ["nmap", "-A", ip],
+        "nmap_servizi": ["nmap", "-sV", ip],
+        "nmap_os_detection": ["nmap", "-O", ip],
         "nmap_vuln_scan": ["nmap", "--script", "vuln", ip]
     }
     
@@ -94,11 +93,43 @@ def esegui_dorks(dominio, dorks_file):
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
                 links = [a['href'] for a in soup.find_all('a', href=True)]
-                salva_su_desktop(f"google_dorks_{dominio}.txt", f"Dork: {dork}\nRisultati: {links}")
+                for link in links:
+                    print(f"Dork: {dork}\nLink: {link}")
+                    salva_su_desktop(f"google_dorks_{dominio}.txt", f"Dork: {dork}\nLink: {link}")
             else:
                 print(f"Errore nella ricerca con Dork {dork}. Status code: {response.status_code}")
         except Exception as e:
             print(f"Errore durante la ricerca con Dork {dork}: {e}")
+
+def mostra_pagine_login(dominio):
+    """Mostra le pagine di login e admin tramite Dorks."""
+    dorks_login = [
+        'inurl:admin',
+        'inurl:login',
+        'inurl:wp-login',
+        'intitle:login',
+        'intitle:admin',
+        'inurl:signin',
+        'inurl:auth',
+        'inurl:dashboard',
+        'inurl:cpanel'
+    ]
+    
+    print(f"\nRicerca delle pagine di login e admin per {dominio}...\n")
+    for dork in dorks_login:
+        url_dork = f"https://www.google.com/search?q={dork}+site:{dominio}"
+        try:
+            response = requests.get(url_dork)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                links = [a['href'] for a in soup.find_all('a', href=True)]
+                for link in links:
+                    print(f"Pagine admin/login trovate:\nDork: {dork}\nLink: {link}")
+                    salva_su_desktop(f"pagine_login_{dominio}.txt", f"Dork: {dork}\nLink: {link}")
+            else:
+                print(f"Errore nella ricerca delle pagine login/admin con Dork {dork}. Status code: {response.status_code}")
+        except Exception as e:
+            print(f"Errore durante la ricerca delle pagine login/admin con Dork {dork}: {e}")
 
 def main():
     """Funzione principale per eseguire le scansioni."""
@@ -120,8 +151,11 @@ def main():
         # Scansione con Uniscan
         esegui_uniscan(dominio)
         
-        # Esecuzione delle Google Dorks per trovare pagine di login/admin
+        # Esecuzione delle Google Dorks per trovare pagine sensibili
         esegui_dorks(dominio, dorks_file)
+        
+        # Mostra pagine admin e login
+        mostra_pagine_login(dominio)
     else:
         print("Impossibile proseguire senza l'IP del dominio.")
 
