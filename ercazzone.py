@@ -42,14 +42,16 @@ def supera_cloudflare(session, url, headers):
         print(f"Errore durante il superamento di Cloudflare: {e}")
         return None
 
-def esegui_sqlmap(dominio):
+def esegui_sqlmap(url):
     """Esegui SQLMap su URL vulnerabili."""
-    comando = ["sqlmap", "-u", dominio, "--batch", "--crawl=3", "--level=5"]
-    print(f"\nEsecuzione SQLMap su {dominio}...")
+    if not url.startswith("http"):  # Controlla che l'URL sia valido
+        url = "http://" + url
+    comando = ["sqlmap", "-u", url, "--batch", "--crawl=3", "--level=5"]
+    print(f"\nEsecuzione SQLMap su {url}...")
     stdout, stderr = run_command(comando)
     if stdout:
         print(f"Risultati SQLMap:\n", stdout)
-        salva_su_desktop(f"sqlmap_{dominio}.txt", stdout)
+        salva_su_desktop(f"sqlmap_{url.replace('://', '_').replace('/', '_')}.txt", stdout)
     if stderr:
         print(f"Errori durante SQLMap:\n", stderr)
 
@@ -70,7 +72,7 @@ def esegui_dorks_e_sqlmap(dominio, dorks_file):
         
         if response and response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
-            links = [a['href'] for a in soup.find_all('a', href=True)]
+            links = [a['href'] for a in soup.find_all('a', href=True) if dominio in a['href']]
             for link in links:
                 print(f"Dork: {dork}\nLink: {link}")
                 salva_su_desktop(f"google_dorks_{dominio}.txt", f"Dork: {dork}\nLink: {link}")
@@ -93,7 +95,6 @@ def main():
     if ip:
         # Esecuzione delle Google Dorks con SQLMap
         esegui_dorks_e_sqlmap(dominio, dorks_file)
-
     else:
         print("Impossibile proseguire senza l'IP del dominio.")
 
