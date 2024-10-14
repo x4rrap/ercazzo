@@ -1,125 +1,125 @@
 import os
 import subprocess
-import socket
 import requests
-from datetime import datetime
+import socket
+from bs4 import BeautifulSoup
+import re
 
 def run_command(command):
-    """Esegui un comando di sistema e restituisci l'output, gestendo eventuali errori."""
-    try:
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
-        return result.stdout
-    except subprocess.CalledProcessError as e:
-        print(f"Errore nell'esecuzione del comando: {e}")
-        return None
+    """Esegui un comando di sistema e restituisci l'output."""
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return result.stdout, result.stderr
 
 def salva_su_desktop(file_name, data):
     """Salva i dati in un file sul Desktop."""
-    try:
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        if not os.path.exists(desktop_path):
-            os.makedirs(desktop_path)
-        
-        file_path = os.path.join(desktop_path, file_name)
-        with open(file_path, 'a') as file:
-            file.write(data + '\n')
-        print(f"Risultati salvati in: {file_path}")
-    except Exception as e:
-        print(f"Errore nel salvataggio del file {file_name}: {e}")
+    desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+    if not os.path.exists(desktop_path):
+        os.makedirs(desktop_path)
+    
+    file_path = os.path.join(desktop_path, file_name)
+    with open(file_path, 'a') as file:
+        file.write(data + '\n')
+    print(f"Risultati salvati in: {file_path}")
 
 def risolvi_ip(dominio):
     """Risolvi l'indirizzo IP reale del dominio."""
     try:
         ip = socket.gethostbyname(dominio)
-        print(f"IP di {dominio}: {ip}")
+        print(f"IP reale di {dominio}: {ip}")
         return ip
-    except socket.gaierror as e:
-        print(f"Errore nel risolvere l'IP per il dominio {dominio}: {e}")
+    except socket.gaierror:
+        print(f"Impossibile risolvere l'IP per il dominio {dominio}.")
         return None
 
-def esegui_nmap(dominio):
-    """Esegui una scansione Nmap completa sul dominio."""
-    print(f"\nEsecuzione Nmap su {dominio}...")
-    comando = ["nmap", "-sV", "-p-", "--script=vuln", dominio]
-    stdout = run_command(comando)
+def nmap_full_scan(ip):
+    """Esegui una mappatura completa con Nmap e rileva vulnerabilità."""
+    print(f"\nEsecuzione di una scansione completa Nmap su {ip}...")
+    commands = [
+        ["nmap", "-A", "-T4", ip],  # Scansione aggressiva con rilevazione OS
+        ["nmap", "-p-", "--open", ip],  # Scansione completa delle porte aperte
+        ["nmap", "--script", "vuln", ip],  # Scansione delle vulnerabilità
+        ["nmap", "--script", "http-enum", ip]  # Enumera directory e risorse HTTP
+    ]
     
-    if stdout:
-        print(f"Risultati Nmap:\n{stdout}")
-        salva_su_desktop(f"nmap_{dominio}.txt", stdout)
+    for i, command in enumerate(commands):
+        stdout, stderr = run_command(command)
+        if stdout:
+            print(f"Risultati della scansione Nmap {i + 1}:\n", stdout)
+            salva_su_desktop(f"nmap_scan_{i+1}_{ip}.txt", stdout)
+        if stderr:
+            print(f"Errori durante la scansione Nmap {i + 1}:\n", stderr)
 
-def esegui_sslscan(dominio):
-    """Esegui l'analisi del certificato SSL con SSLyze."""
-    print(f"\nAnalisi del certificato SSL per {dominio}...")
-    comando = ["sslyze", "--regular", dominio]
-    stdout = run_command(comando)
-    
+def esegui_ssl(dominio):
+    """Esegui SSLyze per controllare i certificati SSL."""
+    comando = ["sslyze", f"--regular {dominio}:443"]
+    print(f"\nControllo certificati SSL per {dominio}...")
+    stdout, stderr = run_command(comando)
     if stdout:
-        print(f"Risultati SSLyze:\n{stdout}")
-        salva_su_desktop(f"ssl_{dominio}.txt", stdout)
+        print(f"Risultati SSLyze:\n", stdout)
+        salva_su_desktop(f"sslyze_{dominio}.txt", stdout)
+    if stderr:
+        print(f"Errori durante SSLyze:\n", stderr)
 
 def esegui_gobuster(dominio):
-    """Esegui Gobuster per il brute forcing delle directory nascoste."""
-    print(f"\nEsecuzione Gobuster su {dominio}...")
-    wordlist = "/usr/share/wordlists/dirb/common.txt"  # Cambiare con il percorso della propria wordlist
-    comando = ["gobuster", "dir", "-u", f"http://{dominio}", "-w", wordlist]
-    stdout = run_command(comando)
-    
+    """Esegui GoBuster per individuare directory nascoste."""
+    comando = ["gobuster", "dir", "-u", f"http://{dominio}", "-w", "/usr/share/wordlists/dirb/common.txt"]
+    print(f"\nEsecuzione di GoBuster su {dominio}...")
+    stdout, stderr = run_command(comando)
     if stdout:
-        print(f"Risultati Gobuster:\n{stdout}")
+        print(f"Risultati GoBuster:\n", stdout)
         salva_su_desktop(f"gobuster_{dominio}.txt", stdout)
+    if stderr:
+        print(f"Errori durante GoBuster:\n", stderr)
 
-def esegui_nikto(dominio):
-    """Esegui Nikto per la scansione delle vulnerabilità web."""
-    print(f"\nEsecuzione Nikto su {dominio}...")
-    comando = ["nikto", "-host", dominio]
-    stdout = run_command(comando)
-    
+def esegui_sqlmap(dominio):
+    """Esegui SQLMap per rilevare vulnerabilità SQL injection."""
+    comando = ["sqlmap", "-u", f"http://{dominio}", "--batch", "--crawl=5", "--random-agent"]
+    print(f"\nEsecuzione di SQLMap su {dominio}...")
+    stdout, stderr = run_command(comando)
     if stdout:
-        print(f"Risultati Nikto:\n{stdout}")
-        salva_su_desktop(f"nikto_{dominio}.txt", stdout)
+        print(f"Risultati SQLMap:\n", stdout)
+        salva_su_desktop(f"sqlmap_{dominio}.txt", stdout)
+    if stderr:
+        print(f"Errori durante SQLMap:\n", stderr)
 
-def esegui_subfinder(dominio):
-    """Esegui Subfinder per trovare sottodomini."""
-    print(f"\nEsecuzione Subfinder per la scoperta di sottodomini su {dominio}...")
-    comando = ["subfinder", "-d", dominio]
-    stdout = run_command(comando)
-    
+def esegui_searchsploit(dominio):
+    """Esegui Searchsploit per trovare exploit noti per il dominio."""
+    comando = ["searchsploit", dominio]
+    print(f"\nEsecuzione di Searchsploit per {dominio}...")
+    stdout, stderr = run_command(comando)
     if stdout:
-        print(f"Sottodomini trovati:\n{stdout}")
-        salva_su_desktop(f"subfinder_{dominio}.txt", stdout)
-
-def esegui_searchsploit(software):
-    """Esegui Searchsploit per cercare vulnerabilità note nel software identificato."""
-    print(f"\nCerca exploit per {software} con Searchsploit...")
-    comando = ["searchsploit", software]
-    stdout = run_command(comando)
-    
-    if stdout:
-        print(f"Exploit trovati per {software}:\n{stdout}")
-        salva_su_desktop(f"searchsploit_{software}.txt", stdout)
+        print(f"Risultati Searchsploit:\n", stdout)
+        salva_su_desktop(f"searchsploit_{dominio}.txt", stdout)
+    if stderr:
+        print(f"Errori durante Searchsploit:\n", stderr)
 
 def main():
     """Funzione principale per eseguire le scansioni."""
     dominio = input("Inserisci il dominio del sito web (es: example.com): ")
     
+    # Validazione del dominio
+    if not re.match(r'^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', dominio):
+        print("Dominio non valido.")
+        return
+
     ip = risolvi_ip(dominio)
     
     if ip:
-        print(f"\nInizio scansioni per {dominio} ({ip}) alle {datetime.now()}\n")
+        # Esegui la scansione completa Nmap
+        nmap_full_scan(ip)
         
-        # Esegui le varie scansioni
-        esegui_nmap(dominio)
-        esegui_sslscan(dominio)
+        # Esegui controllo SSL con SSLyze
+        esegui_ssl(dominio)
+
+        # Esegui directory enumeration con GoBuster
         esegui_gobuster(dominio)
-        esegui_nikto(dominio)
-        esegui_subfinder(dominio)
-        
-        # Cerca exploit per software noti
-        software = input("Inserisci il nome del software da cercare su Searchsploit (oppure premi invio per saltare): ")
-        if software:
-            esegui_searchsploit(software)
-        
-        print(f"\nScansioni completate per {dominio} alle {datetime.now()}")
+
+        # Esegui SQLMap per rilevare vulnerabilità SQL injection
+        esegui_sqlmap(dominio)
+
+        # Esegui Searchsploit per cercare exploit noti
+        esegui_searchsploit(dominio)
+
     else:
         print("Impossibile proseguire senza l'IP del dominio.")
 
