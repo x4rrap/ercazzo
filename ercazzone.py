@@ -1,19 +1,17 @@
 import os
 import subprocess
-import requests
 import socket
-from bs4 import BeautifulSoup
-import time
-import re
+import requests
+from datetime import datetime
 
 def run_command(command):
-    """Esegui un comando di sistema e restituisci l'output, gestendo gli errori."""
+    """Esegui un comando di sistema e restituisci l'output, gestendo eventuali errori."""
     try:
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
-        return result.stdout, result.stderr
+        return result.stdout
     except subprocess.CalledProcessError as e:
-        print(f"Errore nell'esecuzione del comando {command}: {e}")
-        return None, str(e)
+        print(f"Errore nell'esecuzione del comando: {e}")
+        return None
 
 def salva_su_desktop(file_name, data):
     """Salva i dati in un file sul Desktop."""
@@ -30,128 +28,98 @@ def salva_su_desktop(file_name, data):
         print(f"Errore nel salvataggio del file {file_name}: {e}")
 
 def risolvi_ip(dominio):
-    """Risolvi l'indirizzo IP reale del dominio, con gestione degli errori."""
+    """Risolvi l'indirizzo IP reale del dominio."""
     try:
         ip = socket.gethostbyname(dominio)
-        print(f"IP reale di {dominio}: {ip}")
+        print(f"IP di {dominio}: {ip}")
         return ip
     except socket.gaierror as e:
-        print(f"Impossibile risolvere l'IP per il dominio {dominio}. Errore: {e}")
+        print(f"Errore nel risolvere l'IP per il dominio {dominio}: {e}")
         return None
 
-def supera_cloudflare(session, url, headers):
-    """Effettua richieste superando Cloudflare con gestione degli errori."""
-    try:
-        time.sleep(5)  # Delay per evitare il rilevamento
-        response = session.get(url, headers=headers, timeout=10)
-        return response
-    except requests.exceptions.RequestException as e:
-        print(f"Errore durante il superamento di Cloudflare: {e}")
-        return None
-
-def esegui_sqlmap(url):
-    """Esegui SQLMap su URL vulnerabili con gestione degli errori."""
-    if not url.startswith("http"):
-        url = "http://" + url
-    comando = ["sqlmap", "-u", url, "--batch", "--crawl=3", "--level=5"]
-    print(f"\nEsecuzione SQLMap su {url}...")
-    stdout, stderr = run_command(comando)
+def esegui_nmap(dominio):
+    """Esegui una scansione Nmap completa sul dominio."""
+    print(f"\nEsecuzione Nmap su {dominio}...")
+    comando = ["nmap", "-sV", "-p-", "--script=vuln", dominio]
+    stdout = run_command(comando)
     
     if stdout:
-        print(f"Risultati SQLMap:\n{stdout}")
-        salva_su_desktop(f"sqlmap_{url.replace('://', '_').replace('/', '_')}.txt", stdout)
-    if stderr:
-        print(f"Errori durante SQLMap:\n{stderr}")
+        print(f"Risultati Nmap:\n{stdout}")
+        salva_su_desktop(f"nmap_{dominio}.txt", stdout)
 
-def esegui_dorks_e_sqlmap(dominio, dorks_file):
-    """Esegui le Google Dorks per trovare pagine vulnerabili e SQLMap per verificarle."""
-    session = requests.Session()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
-    }
-    
-    try:
-        with open(dorks_file, 'r') as file:
-            dorks = [line.strip() for line in file.readlines()]
-    except FileNotFoundError:
-        print(f"File dorks non trovato: {dorks_file}")
-        return
-
-    print(f"\nEsecuzione delle Google Dorks su {dominio}...\n")
-    for dork in dorks:
-        url_dork = f"https://www.google.com/search?q={dork}+site:{dominio}"
-        response = supera_cloudflare(session, url_dork, headers)
-        
-        if response and response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            links = [a['href'] for a in soup.find_all('a', href=True) if dominio in a['href']]
-            for link in links:
-                print(f"Dork: {dork}\nLink: {link}")
-                salva_su_desktop(f"google_dorks_{dominio}.txt", f"Dork: {dork}\nLink: {link}")
-                esegui_sqlmap(link)  # Verifica le vulnerabilità con SQLMap
-        else:
-            print(f"Errore nella ricerca con Dork {dork}. Status code: {response.status_code if response else 'N/A'}")
-
-def esegui_dirb(dominio):
-    """Esegui Dirb per trovare directory nascoste con gestione degli errori."""
-    comando = ["dirb", f"http://{dominio}"]
-    print(f"\nEsecuzione Dirb su {dominio}...")
-    stdout, stderr = run_command(comando)
+def esegui_sslscan(dominio):
+    """Esegui l'analisi del certificato SSL con SSLyze."""
+    print(f"\nAnalisi del certificato SSL per {dominio}...")
+    comando = ["sslyze", "--regular", dominio]
+    stdout = run_command(comando)
     
     if stdout:
-        print(f"Risultati Dirb:\n{stdout}")
-        salva_su_desktop(f"dirb_{dominio}.txt", stdout)
-    if stderr:
-        print(f"Errori durante Dirb:\n{stderr}")
+        print(f"Risultati SSLyze:\n{stdout}")
+        salva_su_desktop(f"ssl_{dominio}.txt", stdout)
 
-def esegui_wafw00f(dominio):
-    """Esegui Wafw00f per rilevare firewall WAF sul dominio con gestione degli errori."""
-    comando = ["wafw00f", dominio]
-    print(f"\nEsecuzione Wafw00f su {dominio}...")
-    stdout, stderr = run_command(comando)
+def esegui_gobuster(dominio):
+    """Esegui Gobuster per il brute forcing delle directory nascoste."""
+    print(f"\nEsecuzione Gobuster su {dominio}...")
+    wordlist = "/usr/share/wordlists/dirb/common.txt"  # Cambiare con il percorso della propria wordlist
+    comando = ["gobuster", "dir", "-u", f"http://{dominio}", "-w", wordlist]
+    stdout = run_command(comando)
     
     if stdout:
-        print(f"Risultati Wafw00f:\n{stdout}")
-        salva_su_desktop(f"wafw00f_{dominio}.txt", stdout)
-    if stderr:
-        print(f"Errori durante Wafw00f:\n{stderr}")
+        print(f"Risultati Gobuster:\n{stdout}")
+        salva_su_desktop(f"gobuster_{dominio}.txt", stdout)
 
-def analizza_headers(dominio):
-    """Controlla gli headers HTTP del dominio per informazioni sensibili."""
-    try:
-        response = requests.head(f"http://{dominio}", timeout=10)
-        headers = response.headers
-        print(f"\nHeaders HTTP per {dominio}:")
-        for key, value in headers.items():
-            print(f"{key}: {value}")
-            salva_su_desktop(f"headers_{dominio}.txt", f"{key}: {value}")
-    except requests.exceptions.RequestException as e:
-        print(f"Errore durante la richiesta degli headers: {e}")
+def esegui_nikto(dominio):
+    """Esegui Nikto per la scansione delle vulnerabilità web."""
+    print(f"\nEsecuzione Nikto su {dominio}...")
+    comando = ["nikto", "-host", dominio]
+    stdout = run_command(comando)
+    
+    if stdout:
+        print(f"Risultati Nikto:\n{stdout}")
+        salva_su_desktop(f"nikto_{dominio}.txt", stdout)
+
+def esegui_subfinder(dominio):
+    """Esegui Subfinder per trovare sottodomini."""
+    print(f"\nEsecuzione Subfinder per la scoperta di sottodomini su {dominio}...")
+    comando = ["subfinder", "-d", dominio]
+    stdout = run_command(comando)
+    
+    if stdout:
+        print(f"Sottodomini trovati:\n{stdout}")
+        salva_su_desktop(f"subfinder_{dominio}.txt", stdout)
+
+def esegui_searchsploit(software):
+    """Esegui Searchsploit per cercare vulnerabilità note nel software identificato."""
+    print(f"\nCerca exploit per {software} con Searchsploit...")
+    comando = ["searchsploit", software]
+    stdout = run_command(comando)
+    
+    if stdout:
+        print(f"Exploit trovati per {software}:\n{stdout}")
+        salva_su_desktop(f"searchsploit_{software}.txt", stdout)
 
 def main():
     """Funzione principale per eseguire le scansioni."""
     dominio = input("Inserisci il dominio del sito web (es: example.com): ")
     
-    # Supporto per domini .onion e .gov
-    if not re.match(r'^(http://|https://)?([a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,6}|[a-zA-Z0-9\-\.]+\.onion|[a-zA-Z0-9\-\.]+\.gov)$', dominio):
-        print("Dominio non valido. Assicurati che sia un dominio pubblico, .onion o .gov.")
-        return
-
-    dorks_file = '/mnt/data/google-dorks.txt'  # Caricamento del file di dorks caricato
     ip = risolvi_ip(dominio)
     
     if ip:
-        # Esecuzione delle Google Dorks con SQLMap
-        esegui_dorks_e_sqlmap(dominio, dorks_file)
+        print(f"\nInizio scansioni per {dominio} ({ip}) alle {datetime.now()}\n")
         
-        # Esecuzione di Dirb per cercare directory nascoste
-        esegui_dirb(dominio)
+        # Esegui le varie scansioni
+        esegui_nmap(dominio)
+        esegui_sslscan(dominio)
+        esegui_gobuster(dominio)
+        esegui_nikto(dominio)
+        esegui_subfinder(dominio)
         
-        # Esecuzione di Wafw00f per rilevare eventuali firewall WAF
-        esegui_wafw00f(dominio)
+        # Cerca exploit per software noti
+        software = input("Inserisci il nome del software da cercare su Searchsploit (oppure premi invio per saltare): ")
+        if software:
+            esegui_searchsploit(software)
         
-        # Analisi degli headers HTTP
-        analizza_headers(dominio)
+        print(f"\nScansioni completate per {dominio} alle {datetime.now()}")
     else:
         print("Impossibile proseguire senza l'IP del dominio.")
 
