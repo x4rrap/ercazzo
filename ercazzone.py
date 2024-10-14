@@ -6,8 +6,6 @@ from bs4 import BeautifulSoup
 import re
 import time
 
-print("by hagg4rucci0")
-
 def run_command(command):
     """Esegui un comando di sistema e restituisci l'output."""
     result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
