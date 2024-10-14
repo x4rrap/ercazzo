@@ -28,8 +28,8 @@ def risolvi_ip(dominio):
         ip = socket.gethostbyname(dominio)
         print(f"IP reale di {dominio}: {ip}")
         return ip
-    except socket.gaierror:
-        print(f"Impossibile risolvere l'IP per il dominio {dominio}.")
+    except socket.gaierror as e:
+        print(f"Impossibile risolvere l'IP per il dominio {dominio}. Errore: {e}")
         return None
 
 def supera_cloudflare(session, url, headers):
@@ -80,6 +80,40 @@ def esegui_dorks_e_sqlmap(dominio, dorks_file):
         else:
             print(f"Errore nella ricerca con Dork {dork}. Status code: {response.status_code if response else 'N/A'}")
 
+def esegui_dirb(dominio):
+    """Esegui Dirb per trovare directory nascoste."""
+    comando = ["dirb", f"http://{dominio}"]
+    print(f"\nEsecuzione Dirb su {dominio}...")
+    stdout, stderr = run_command(comando)
+    if stdout:
+        print(f"Risultati Dirb:\n", stdout)
+        salva_su_desktop(f"dirb_{dominio}.txt", stdout)
+    if stderr:
+        print(f"Errori durante Dirb:\n", stderr)
+
+def esegui_wafw00f(dominio):
+    """Esegui Wafw00f per rilevare firewall WAF sul dominio."""
+    comando = ["wafw00f", dominio]
+    print(f"\nEsecuzione Wafw00f su {dominio}...")
+    stdout, stderr = run_command(comando)
+    if stdout:
+        print(f"Risultati Wafw00f:\n", stdout)
+        salva_su_desktop(f"wafw00f_{dominio}.txt", stdout)
+    if stderr:
+        print(f"Errori durante Wafw00f:\n", stderr)
+
+def analizza_headers(dominio):
+    """Controlla gli headers HTTP del dominio per informazioni sensibili."""
+    try:
+        response = requests.head(f"http://{dominio}")
+        headers = response.headers
+        print(f"\nHeaders HTTP per {dominio}:")
+        for key, value in headers.items():
+            print(f"{key}: {value}")
+            salva_su_desktop(f"headers_{dominio}.txt", f"{key}: {value}")
+    except requests.exceptions.RequestException as e:
+        print(f"Errore durante la richiesta degli headers: {e}")
+
 def main():
     """Funzione principale per eseguire le scansioni."""
     dominio = input("Inserisci il dominio del sito web (es: example.com): ")
@@ -95,6 +129,15 @@ def main():
     if ip:
         # Esecuzione delle Google Dorks con SQLMap
         esegui_dorks_e_sqlmap(dominio, dorks_file)
+        
+        # Esecuzione di Dirb per cercare directory nascoste
+        esegui_dirb(dominio)
+        
+        # Esecuzione di Wafw00f per rilevare eventuali firewall WAF
+        esegui_wafw00f(dominio)
+        
+        # Analisi degli headers HTTP
+        analizza_headers(dominio)
     else:
         print("Impossibile proseguire senza l'IP del dominio.")
 
